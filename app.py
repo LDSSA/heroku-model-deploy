@@ -32,14 +32,13 @@ class Prediction(Model):
     observation_id = IntegerField(unique=True)
     proba = FloatField()
     predicted_class = BooleanField()
-    true_class = BooleanField
+    true_class = BooleanField(null=True)
 
     class Meta:
         database = DB
 
 
-if not Prediction.table_exists():
-    DB.create_table(Prediction)
+DB.create_tables([Prediction], safe=True)
 
 # End database stuff
 ########################################
@@ -56,7 +55,7 @@ def predict():
     proba = 0.5
     p = Prediction(observation_id=0, proba=proba, predicted_class=True)
     p.save()
-    return str(proba)
+    return jsonify(model_to_dict(p))
 
 
 @app.route('/update', methods=['POST'])
