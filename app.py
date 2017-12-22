@@ -1,4 +1,5 @@
 import os
+import pickle
 from flask import Flask, jsonify
 from peewee import (
     SqliteDatabase, PostgresqlDatabase, Model, IntegerField,
@@ -41,6 +42,17 @@ class Prediction(Model):
 DB.create_tables([Prediction], safe=True)
 
 # End database stuff
+########################################
+
+########################################
+# Unpickle the previously-trained model
+
+
+with open('./model.pickle', 'rb') as fh:
+    model = pickle.load(fh)
+
+
+# End model un-pickling
 ########################################
 
 
