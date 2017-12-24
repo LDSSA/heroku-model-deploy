@@ -1,6 +1,8 @@
 import os
+import json
 import pickle
-from flask import Flask, jsonify
+import pandas as pd
+from flask import Flask, jsonify, request
 from peewee import (
     SqliteDatabase, PostgresqlDatabase, Model, IntegerField,
     FloatField, BooleanField,
@@ -33,7 +35,7 @@ class Prediction(Model):
     observation_id = IntegerField(unique=True)
     proba = FloatField()
     predicted_class = BooleanField()
-    true_class = BooleanField(null=True)
+    true_class = IntegerField(null=True)
 
     class Meta:
         database = DB
@@ -48,8 +50,16 @@ DB.create_tables([Prediction], safe=True)
 # Unpickle the previously-trained model
 
 
-with open('./model.pickle', 'rb') as fh:
-    model = pickle.load(fh)
+with open('columns.json') as fh:
+    columns = json.load(fh)
+
+
+with open('pipeline.pickle', 'rb') as fh:
+    pipeline = pickle.load(fh)
+
+
+with open('dtypes.pickle', 'rb') as fh:
+    dtypes = pickle.load(fh)
 
 
 # End model un-pickling
@@ -64,18 +74,28 @@ app = Flask(__name__)
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    proba = 0.5
-    p = Prediction(observation_id=0, proba=proba, predicted_class=True)
+    # flask provides a deserialization convenience function called
+    # get_json that will work if the mimetype is application/json
+    obs_dict = request.get_json()
+    _id = obs_dict['id']
+    observation = obs_dict['observation']
+    # now do what we already learned in the notebooks about how to transform
+    # a single observation into a dataframe that will work with a pipeline
+    obs = pd.DataFrame([observation], columns=columns).astype(dtypes)
+    # now get ourselves an actual prediction of the positive class
+    proba = pipeline.predict_proba(obs)[0, 1]
+    p = Prediction(observation_id=_id, proba=proba, predicted_class=True)
     p.save()
     return jsonify(model_to_dict(p))
 
 
 @app.route('/update', methods=['POST'])
 def update():
-    p = Prediction.get(Prediction.observation_id == 0)
-    p.true_class = False
+    obs = request.get_json()
+    p = Prediction.get(Prediction.observation_id == obs['id'])
+    p.true_class = obs['true_class']
     p.save()
-    return 'success'
+    return jsonify(model_to_dict(p))
 
 
 @app.route('/list-db-contents')
@@ -84,9 +104,10 @@ def list_db_contents():
         model_to_dict(obs) for obs in Prediction.select()
     ])
 
+
 # End webserver stuff
 ########################################
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
 
