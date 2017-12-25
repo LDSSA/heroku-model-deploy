@@ -128,7 +128,7 @@ So now that we've got a way to build an entire server, let's try to actually use
 server to receive new information. There's a pretty nice way to do this via the
 [get_json](http://flask.pocoo.org/docs/0.12/api/#flask.Request.get_json) flask function.
 
-For this server, let's say that the model only takes a single field called `at_risk`
+For this server, let's say that the model only takes a single field called `unemployed`
 and returns `true` if `unemployed` is true and `false` otherwise. The server would now
 look like this:
 
