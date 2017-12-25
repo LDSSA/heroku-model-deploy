@@ -281,7 +281,11 @@ few lines of code have done for us because it it A LOT.
 #### Connect to database
 
 `DB = SqliteDatabase('predictions.db')`
-Create a sqlite databse that will be stored in a file called `predictions.db`
+
+Create a sqlite databse that will be stored in a file called `predictions.db`.
+This may seem trivial right now, but soon enough you will see that changing
+out this line of code for one other will result in a lot of value for
+the effort.
 
 #### Define the data model
 
