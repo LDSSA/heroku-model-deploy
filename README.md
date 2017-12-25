@@ -85,16 +85,12 @@ the server in development mode, we've created an entire server that
 can be run by executing `python app.py`:
 
 ```py
-# the request object does exactly what the name suggests: holds
-# all of the contents of an HTTP request that someone is making
-# the Flask object is for creating an HTTP server - you'll
-# see this a few lines down.
-# the jsonify function is useful for when we want to return
-# json from the function we are using.
+# these contents can be put into a file called app.py
+# and run by executing:
+# python app.py
+
 from flask import Flask, request, jsonify
 
-# here we use the Flask constructor to create a new
-# application that we can add routes to
 app = Flask(__name__)
 
 @app.route('/predict', methods=['POST'])
