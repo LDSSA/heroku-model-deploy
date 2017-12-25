@@ -80,6 +80,8 @@ The above route that we have isn't very smart in that it returns the same
 prediction every time (0.5) and it doesn't actually care about the input
 that you sent it, we've almost created an entire server that serves a prediction!
 
+### Making a complete server
+
 So putting it all together with a few lines of code at the end to start
 the server in development mode, we've created an entire server that 
 can be run by executing `python app.py`:
@@ -104,6 +106,120 @@ if __name__ == "__main__":
     app.run(debug=True)
 
 ```
+
+So if you are running this server and you execute the following, you'll get a prediction:
+
+```bash
+~ > curl -X POST http://localhost:5000/predict
+{
+  "prediction": 0.5
+}
+```
+
+Alright, now that we can run a full flask server, let's try to make something a bit more
+useful by receiving new data.
+
+## Receiving a new observation
+
+So now that we've got a way to build an entire server, let's try to actually use the
+server to receive new information. There's a pretty nice way to do this via the
+[get_json](http://flask.pocoo.org/docs/0.12/api/#flask.Request.get_json) flask function.
+
+For this server, let's say that the model only takes a single field called `at_risk`
+and returns `true` if `unemployed` is true and `false` otherwise. The server would now
+look like this:
+
+```py
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+@app.route('/predict', methods=['POST'])
+def predict():
+    payload = request.get_json()
+    at_risk = payload['unemployed']
+    return jsonify({
+        'prediction': at_risk
+    })
+    
+if __name__ == "__main__":
+    app.run(debug=True)
+```
+
+You can see the output with the following examples:
+```
+curl -X POST http://localhost:5000/predict -d '{"unemployed": true}' -H "Content-Type:application/json"
+{
+  "prediction": true
+}
+```
+
+```
+curl -X POST http://localhost:5000/predict -d '{"unemployed": false}' -H "Content-Type:application/json"
+{
+  "prediction": false
+}
+```
+
+Take a quick note that we had to supply a header of `Content-Type:application/json`
+and json data of `{"unemployed": false}`.
+
+## Integrating with a scikit model
+
+Now that we know how to get a python dictionary via the flask `get_json`
+function, we're at a point in which we can pick up where the last tutorial
+notebook left off! Let's tie it all together now to create a new pandas
+dataframe that can be put through a scikit predictive model.
+
+### Deserialize the model
+
+```py
+import json
+import pickle
+import pandas as pd
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+
+with open('columns.json') as fh:
+    columns = json.load(fh)
+
+
+with open('pipeline.pickle', 'rb') as fh:
+    pipeline = pickle.load(fh)
+
+
+with open('dtypes.pickle', 'rb') as fh:
+    dtypes = pickle.load(fh)
+
+
+@app.route('/predict', methods=['POST'])
+def predict():
+    payload = request.get_json()
+    obs = pd.DataFrame([payload], columns=columns).astype(dtypes)
+    proba = pipeline.predict_proba(obs)[0, 1]
+    return jsonify({
+        'prediction': proba
+    })
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
+```
+
+Check out how we have now taken the payload and turned it into
+a new observation that is a single entry in a dataframe
+and can be consumed by the pipeline to be turned into a prediction
+of survival. You can see the output with the following:
+
+```
+~ >  curl -X POST http://localhost:5000/predict -d '{"Age": 22.0, "Cabin": null, "Embarked": "S", "Fare": 7.25, "Parch": 0, "Pclass": 3, "Sex": "male", "SibSp": 1}' -H "Content-Type:application/json"
+{
+  "prediction": 0.09264179297127445
+}
+```
+
 
 ## IMPORTANT NOTE
 
