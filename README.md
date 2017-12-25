@@ -428,6 +428,44 @@ Now let's take note of the few things that changed
 1. We return `proba` so that the caller of the HTTP endpoint knows what you are
 saying about the observation.
 
+## Receiving updates
+
+Now that we have a way to provide prediction AND keep track of them, we should
+take it to the next level and provide ourselves with a way to receive updates
+on observations that we have judged with our predictive model.
+
+We can do this with one extra endpoint that is very straightforward and only
+introduced one new concept of database querying through the ORM.
+
+```py
+@app.route('/update', methods=['POST'])
+def update():
+    obs = request.get_json()
+    p = Prediction.get(Prediction.observation_id == obs['id'])
+    p.true_class = obs['true_class']
+    p.save()
+    return jsonify(model_to_dict(p))
+```
+
+Assuming that we have already processed an observation with id=0, we
+can now recieve and record the true outcome.
+
+```bash
+~ > curl -X POST http://localhost:5000/update -d '{"id": 0, "true_class": 1}'  -H "Content-Type:application/json"
+{
+  "id": 1,
+  "observation": "{\"id\": 0, \"observation\": {\"Age\": 22.0, \"Cabin\": null, \"Embarked\": \"S\", \"Fare\": 7.25, \"Parch\": 0, \"Pclass\": 3, \"Sex\": \"male\", \"SibSp\": 1}}",
+  "observation_id": 0,
+  "proba": 0.09264179297127445,
+  "true_class": 1
+}
+```
+
+Now to wrap it all up, the way that we can interpret this sequence of events is the following:
+
+1. We provided a prediction of 0.092 probability of survival
+1. We found out later that the person didn't survive
+
 ## Development
 
 To run it locally, create a virtual environment
