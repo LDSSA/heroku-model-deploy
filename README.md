@@ -61,6 +61,9 @@ from flask import Flask, request, jsonify
 app = Flask(__name__)
 ```
 
+This server doesn't do anything yet. In order to make it do stuff we will
+need to add http endpoints to it.
+
 ### Making HTTP endpoints
 
 With flask, creating an http endpoint is incredibly simple assuming that we already
