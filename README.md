@@ -154,15 +154,15 @@ if __name__ == "__main__":
 ```
 
 You can see the output with the following examples:
-```
-curl -X POST http://localhost:5000/predict -d '{"unemployed": true}' -H "Content-Type:application/json"
+```bash
+~ > curl -X POST http://localhost:5000/predict -d '{"unemployed": true}' -H "Content-Type:application/json"
 {
   "prediction": true
 }
 ```
 
-```
-curl -X POST http://localhost:5000/predict -d '{"unemployed": false}' -H "Content-Type:application/json"
+```bash
+~ > curl -X POST http://localhost:5000/predict -d '{"unemployed": false}' -H "Content-Type:application/json"
 {
   "prediction": false
 }
@@ -328,7 +328,7 @@ pip install -r requirements.txt
 New observation comes in
 
 ```
-curl -X POST http://localhost:5000/predict -d '{"id": 0, "observation": {"Age": 22.0, "Cabin": null, "Embarked": "S", "Fare": 7.25, "Parch": 0, "Pclass": 3, "Sex": "male", "SibSp": 1}}' -H "Content-Type:application/json"
+~ > curl -X POST http://localhost:5000/predict -d '{"id": 0, "observation": {"Age": 22.0, "Cabin": null, "Embarked": "S", "Fare": 7.25, "Parch": 0, "Pclass": 3, "Sex": "male", "SibSp": 1}}' -H "Content-Type:application/json"
 {
   "id": 1, 
   "observation_id": 0, 
