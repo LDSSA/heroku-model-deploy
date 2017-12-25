@@ -247,7 +247,8 @@ called an [ORM](https://en.wikipedia.org/wiki/Object-relational_mapping). For th
 exercise we will use a very simplistic ORM called [peewee](http://docs.peewee-orm.com/en/latest/index.html).
 This will allow us to use a local database called [sqlite](https://en.wikipedia.org/wiki/SQLite)
 when we are developing on our laptops and use a more production-ready database called 
-[postgresql](https://en.wikipedia.org/wiki/PostgreSQL) when deploying to heroku.
+[postgresql](https://en.wikipedia.org/wiki/PostgreSQL) when deploying to heroku with very
+little change to our code.
 
 One cool thing that ORMs allow us to do is define the data model that we want
 to use in code. So let's use peewee to create a data model to keep track of
