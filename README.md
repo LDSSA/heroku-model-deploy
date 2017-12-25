@@ -1,3 +1,7 @@
+## IMPORTANT NOTE
+
+This repo is still in development! You may look for now but until I give the signal, it could change at any moment!
+
 # Scikit model behind flask app on heroku
 
 This is a very simplistic yet effective way to deploy a scikit binary
@@ -177,7 +181,7 @@ notebook left off! Let's tie it all together by
 1. Turn the new observation into a pandas dataframe
 1. Call predict_proba to get liklihood of survival of new observation
 
-### Deserialize the model and prep observation
+### Deserialize model, prep observation, predict
 
 ```py
 import json
@@ -224,10 +228,90 @@ of survival. You can see the output with the following:
 }
 ```
 
+## Keeping track of your predictions
 
-## IMPORTANT NOTE
+Okay now that you can get data, produce predictions, and return those predictions,
+you will need to keep track of what you've been saying about who. Said another way:
+you can't just provide predictions and then just forget about it all. You need to
+take record of what you have predicted about who so that you can revisit later on
+to do some additional analysis on your "through the door" population.
 
-This repo is still in development! You may look for now but until I give the signal, it could change at any moment!
+In order to do this, we will need to start working with a database. The database
+will keep track of the observations, the predictions we have provided for them
+as well as the true outcomes should we be luckly enough to find out.
+
+### ORMs and peewee
+
+When working with databases in code, you generally want to be using a layer of abstraction
+called an [ORM](https://en.wikipedia.org/wiki/Object-relational_mapping). For this
+exercise we will use a very simplistic ORM called [peewee](http://docs.peewee-orm.com/en/latest/index.html).
+This will allow us to use a local database called [sqlite](https://en.wikipedia.org/wiki/SQLite)
+when we are developing on our laptops and use a more production-ready database called 
+[postgresql](https://en.wikipedia.org/wiki/PostgreSQL) when deploying to heroku.
+
+One cool thing that ORMs allow us to do is define the data model that we want
+to use in code. So let's use peewee to create a data model to keep track of
+predictions and the probabilities we have assigned to them. Once again, we can 
+take care of this in a few lines of code:
+
+```py
+from peewee import (
+    SqliteDatabase, PostgresqlDatabase, Model, IntegerField,
+    FloatField, BooleanField, TextField,
+)
+
+DB = SqliteDatabase('predictions.db')
+
+class Prediction(Model):
+    observation_id = IntegerField(unique=True)
+    observation = TextField()
+    proba = FloatField()
+    true_class = IntegerField(null=True)
+
+    class Meta:
+        database = DB
+
+DB.create_tables([Prediction], safe=True)
+```
+
+Now we need to take a moment to understand exactly how much these
+few lines of code have done for us because it it A LOT.
+
+#### Connect to database
+
+`DB = SqliteDatabase('predictions.db')`
+Create a sqlite databse that will be stored in a file called `predictions.db`
+
+#### Define the data model
+
+`Class Prediction(Model)...`
+
+Define the data model that we will work with. The model has sections for
+the following:
+
+- `observation_id`
+    - There must be a unique identifier to all observations and it is
+      the responsibility of the person providing the observation to give
+      this id.
+- `observation`
+    - We should record the observation itself when it comes in in case
+      we want to retrain our model later on.
+- `proba`
+    - The probability of survival that we assigned
+- `true_class`
+    - This is for later on in the case where we actually find out what
+       actually happened to the observation in which we supplied the
+       prediction for.
+
+#### Create the table
+
+`DB.create_tables([Prediction], safe=True)`
+
+The model that we specified must correspond to a database table.
+Creation of these tables is something that is it's own non trivial
+headache and this one line of code makes it so that we don't have
+to worry about any of it.
+
 
 ## Development
 
@@ -244,7 +328,7 @@ pip install -r requirements.txt
 New observation comes in
 
 ```
- curl -X POST http://localhost:5000/predict -d '{"id": 0, "observation": {"Age": 22.0, "Cabin": null, "Embarked": "S", "Fare": 7.25, "Parch": 0, "Pclass": 3, "Sex": "male", "SibSp": 1}}' -H "Content-Type:application/json"
+curl -X POST http://localhost:5000/predict -d '{"id": 0, "observation": {"Age": 22.0, "Cabin": null, "Embarked": "S", "Fare": 7.25, "Parch": 0, "Pclass": 3, "Sex": "male", "SibSp": 1}}' -H "Content-Type:application/json"
 {
   "id": 1, 
   "observation_id": 0, 
