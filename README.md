@@ -319,6 +319,114 @@ Creation of these tables is something that is it's own non trivial
 headache and this one line of code makes it so that we don't have
 to worry about any of it.
 
+## Integrate data model with webserver
+
+Now that we have a webserver and a data model that we are happy
+with, the next question is how do we put them together? It's
+actually pretty straightforward!
+
+```py
+import json
+import pickle
+import pandas as pd
+from flask import Flask, jsonify, request
+from peewee import (
+    SqliteDatabase, Model, IntegerField, FloatField,
+    BooleanField, TextField,
+)
+from playhouse.shortcuts import model_to_dict
+
+
+########################################
+# Begin database stuff
+
+DB = SqliteDatabase('predictions.db')
+
+
+class Prediction(Model):
+    observation_id = IntegerField(unique=True)
+    observation = TextField()
+    proba = FloatField()
+    true_class = IntegerField(null=True)
+
+    class Meta:
+        database = DB
+
+
+DB.create_tables([Prediction], safe=True)
+
+# End database stuff
+########################################
+
+########################################
+# Unpickle the previously-trained model
+
+
+with open('columns.json') as fh:
+    columns = json.load(fh)
+
+
+with open('pipeline.pickle', 'rb') as fh:
+    pipeline = pickle.load(fh)
+
+
+with open('dtypes.pickle', 'rb') as fh:
+    dtypes = pickle.load(fh)
+
+
+# End model un-pickling
+########################################
+
+
+########################################
+# Begin webserver stuff
+
+app = Flask(__name__)
+
+
+@app.route('/predict', methods=['POST'])
+def predict():
+    obs_dict = request.get_json()
+    _id = obs_dict['id']
+    observation = obs_dict['observation']
+    obs = pd.DataFrame([observation], columns=columns).astype(dtypes)
+    proba = pipeline.predict_proba(obs)[0, 1]
+    p = Prediction(
+        observation_id=_id,
+        proba=proba,
+        observation=request.data,
+    )
+    p.save()
+    return jsonify({'proba': proba})
+
+
+# End webserver stuff
+########################################
+
+if __name__ == "__main__":
+    app.run(debug=True)
+
+```
+
+You can test this with the following command:
+
+```bash
+~ > curl -X POST http://localhost:5000/predict -d '{"id": 0, "observation": {"Age": 22.0, "Cabin": null, "Embarked": "S", "Fare": 7.25, "Parch": 0, "Pclass": 3, "Sex": "male", "SibSp": 1}}' -H "Content-Type:application/json"
+{
+  "proba": 0.09264179297127445
+}
+```
+
+Now let's take note of the few things that changed
+
+1. The structure of the json input changed. It now includes to top level entries:
+    - `id` - This is the unique identifier of the observation
+    - `observation` - This is the actual observation contents that will be sent through
+      the pipeline we have un-pickled.
+1. We create an instance of `Prediction` with the 3 fields that we care about
+1. We call `save()` on the prediction to save it to the database
+1. We return `proba` so that the caller of the HTTP endpoint knows what you are
+saying about the observation.
 
 ## Development
 
