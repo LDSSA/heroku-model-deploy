@@ -5,7 +5,7 @@ import pandas as pd
 from flask import Flask, jsonify, request
 from peewee import (
     SqliteDatabase, PostgresqlDatabase, Model, IntegerField,
-    FloatField, BooleanField,
+    FloatField, BooleanField, TextField,
 )
 from playhouse.shortcuts import model_to_dict
 
@@ -33,8 +33,8 @@ else:
 
 class Prediction(Model):
     observation_id = IntegerField(unique=True)
+    observation = TextField()
     proba = FloatField()
-    predicted_class = BooleanField()
     true_class = IntegerField(null=True)
 
     class Meta:
@@ -84,9 +84,13 @@ def predict():
     obs = pd.DataFrame([observation], columns=columns).astype(dtypes)
     # now get ourselves an actual prediction of the positive class
     proba = pipeline.predict_proba(obs)[0, 1]
-    p = Prediction(observation_id=_id, proba=proba, predicted_class=True)
+    p = Prediction(
+        observation_id=_id,
+        proba=proba,
+        observation=request.data,
+    )
     p.save()
-    return jsonify(model_to_dict(p))
+    return jsonify({'proba': proba})
 
 
 @app.route('/update', methods=['POST'])
