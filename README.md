@@ -17,8 +17,6 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-git push heroku master && heroku logs --tail
-
 ### Example observation
 
 New observation comes in
@@ -38,4 +36,18 @@ Get the true outcome
 
 ```
 curl -X POST http://localhost:5000/update -d '{"id": 0, "true_class": 1}'  -H "Content-Type:application/json"
+```
+
+### Heroku utilities
+
+Push new code after committing it
+
+```
+git push heroku master && heroku logs --tail
+```
+
+Restart the server
+
+```
+heroku ps:restart && heroku logs --tail
 ```
