@@ -7,11 +7,13 @@ This repo is still in development! You may look for now but until I give the sig
 This is a very simplistic yet effective way to deploy a scikit binary
 classifier behind a HTTP server on heroku.
 
-There are 3 main topics to cover here
+There are 4 main topics to cover here
 
 1. Serialization
     - This is covered in notebooks
 1. Flask
+    - Covered here in the readme
+1. Database connection
     - Covered here in the readme
 1. Deployment to heroku
     - Also covered here in the readme
