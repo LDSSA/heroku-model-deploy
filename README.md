@@ -171,10 +171,13 @@ and json data of `{"unemployed": false}`.
 
 Now that we know how to get a python dictionary via the flask `get_json`
 function, we're at a point in which we can pick up where the last tutorial
-notebook left off! Let's tie it all together now to create a new pandas
-dataframe that can be put through a scikit predictive model.
+notebook left off! Let's tie it all together by
 
-### Deserialize the model
+1. Deserializing the model, columns, and dtypes
+1. Turn the new observation into a pandas dataframe
+1. Call predict_proba to get liklihood of survival of new observation
+
+### Deserialize the model and prep observation
 
 ```py
 import json
@@ -188,10 +191,8 @@ app = Flask(__name__)
 with open('columns.json') as fh:
     columns = json.load(fh)
 
-
 with open('pipeline.pickle', 'rb') as fh:
     pipeline = pickle.load(fh)
-
 
 with open('dtypes.pickle', 'rb') as fh:
     dtypes = pickle.load(fh)
