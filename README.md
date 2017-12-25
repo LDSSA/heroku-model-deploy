@@ -48,12 +48,66 @@ done `pip install flask` is to import it at the top of the file. Let's pretend
 that we are working in a file called `app.py`
 
 ```py
-TODO
+# the request object does exactly what the name suggests: holds
+# all of the contents of an HTTP request that someone is making
+# the Flask object is for creating an HTTP server - you'll
+# see this a few lines down.
+# the jsonify function is useful for when we want to return
+# json from the function we are using.
+from flask import Flask, request, jsonify
+
+# here we use the Flask constructor to create a new
+# application that we can add routes to
+app = Flask(__name__)
 ```
 
 ### Making HTTP endpoints
 
-With flask, creating an http endpoint is incredibly simple
+With flask, creating an http endpoint is incredibly simple assuming that we already
+have the `app` object created from the `Flask` constructor. Let's make a single
+endpoint that will serve the predictions:
+
+```py
+@app.route('/predict', methods=['POST'])
+def predict():
+    prediction = 0.5
+    return jsonify({
+        'prediction': prediction
+    })
+```
+
+The above route that we have isn't very smart in that it returns the same
+prediction every time (0.5) and it doesn't actually care about the input
+that you sent it, we've almost created an entire server that serves a prediction!
+
+So putting it all together with a few lines of code at the end to start
+the server in development mode, we've created an entire server that 
+can be run by executing `python app.py`:
+
+```py
+# the request object does exactly what the name suggests: holds
+# all of the contents of an HTTP request that someone is making
+# the Flask object is for creating an HTTP server - you'll
+# see this a few lines down.
+# the jsonify function is useful for when we want to return
+# json from the function we are using.
+from flask import Flask, request, jsonify
+
+# here we use the Flask constructor to create a new
+# application that we can add routes to
+app = Flask(__name__)
+
+@app.route('/predict', methods=['POST'])
+def predict():
+    prediction = 0.5
+    return jsonify({
+        'prediction': prediction
+    })
+    
+if __name__ == "__main__":
+    app.run(debug=True)
+
+```
 
 ## IMPORTANT NOTE
 
