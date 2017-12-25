@@ -466,6 +466,14 @@ Now to wrap it all up, the way that we can interpret this sequence of events is 
 1. We provided a prediction of 0.092 probability of survival
 1. We found out later that the person didn't survive
 
+## Deploy to Heroku
+
+It's cool and all that we can run the servers on our own machines. However, it doesn't
+do much good in terms of making the model available to the rest of the world. All this
+`localhost` stuff doesn't help anybody that's not typing on your local machine.
+
+So all the work 
+
 ## Development
 
 To run it locally, create a virtual environment
