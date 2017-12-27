@@ -622,6 +622,63 @@ To https://git.heroku.com/heroku-model-deploy.git
 }
 ```
 
+You can see the logs (which is helpful for debugging) with the `heroku logs` command.
+Here are the logs for the two calls we just made:
+
+```
+heroku-model-deploy master > heroku logs -n 5
+2017-12-27T20:14:59.351793+00:00 app[web.1]: [2017-12-27 20:14:59 +0000] [4] [INFO] Using worker: sync
+2017-12-27T20:14:59.359149+00:00 app[web.1]: [2017-12-27 20:14:59 +0000] [8] [INFO] Booting worker with pid: 8
+2017-12-27T20:14:59.371891+00:00 app[web.1]: [2017-12-27 20:14:59 +0000] [9] [INFO] Booting worker with pid: 9
+2017-12-27T20:15:00.678404+00:00 heroku[web.1]: State changed from starting to up
+2017-12-27T20:19:25.944435+00:00 heroku[router]: at=info method=POST path="/predict" host=heroku-model-deploy.herokuapp.com request_id=79138602-5b95-497a-9b69-c2528a2bbfc9 fwd="86.166.46.98" dyno=web.1 connect=0ms service=496ms status=200 bytes=187 protocol=https
+2017-12-27T20:20:46.033529+00:00 heroku[router]: at=info method=POST path="/update" host=heroku-model-deploy.herokuapp.com request_id=cc92e857-895d-425b-ab00-a92862e1253e fwd="86.166.46.98" dyno=web.1 connect=1ms service=9ms status=200 bytes=417 protocol=https
+```
+
+### Last few notes
+
+There were are few additional changes to `app.py` and the rest of the repo that we haven't covered yet so
+let's get that out of the way. You probably won't need to know much about them but if you are having
+troubleshooting issues, knowing the following may come in handy.
+
+#### The db connector
+
+Instead of having just an sqlite connector, we needed to add another block of code that would
+detect if it is being run on heroku or not and if so, connect to the postgresql database. We know
+that we are on heroku if there is a `DATABASE_URL` environment variable.
+
+```
+if 'DATABASE_URL' in os.environ:
+    db_url = os.environ['DATABASE_URL']
+    dbname = db_url.split('@')[1].split('/')[1]
+    user = db_url.split('@')[0].split(':')[1].lstrip('//')
+    password = db_url.split('@')[0].split(':')[2]
+    host = db_url.split('@')[1].split('/')[0].split(':')[0]
+    port = db_url.split('@')[1].split('/')[0].split(':')[1]
+    DB = PostgresqlDatabase(
+        dbname,
+        user=user,
+        password=password,
+        host=host,
+        port=port,
+    )
+else:
+    DB = SqliteDatabase('predictions.db')
+```
+
+#### The procfile
+
+The heroku [Procfile](https://devcenter.heroku.com/articles/procfile) is how
+we tell heroku to use the code we have deployed to it. The contents of ours
+is very simple and tells [gunicorn](http://gunicorn.org/) that there's an `app.py`
+file and inside of that file, theres an object called `app` that contains a 
+[wsgi](https://en.wikipedia.org/wiki/Web_Server_Gateway_Interface) server that it
+can use to listen for incoming connections:
+
+```
+web: gunicorn app:app
+```
+
 ## Development
 
 To run it locally, create a virtual environment
