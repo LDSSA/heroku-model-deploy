@@ -556,8 +556,71 @@ LICENSE				Train and Serialize.ipynb	dtypes.pickle			titanic.csv
 Procfile			app.py
 ```
 
-And make sure that heroku knows about the app you just created
+And make sure that heroku knows about the app you just created by adding a git
+remote by executing the following command but replacing "heroku-model-deploy"
+with the name of the app you just created:
 
+```bash
+heroku-model-deploy master > heroku git:remote -a heroku-model-deploy
+set git remote heroku to https://git.heroku.com/heroku-model-deploy.git
+```
+
+One last command and our model will happily be depoyed to the heroku
+cloud:
+```bash
+heroku-model-deploy master > git push heroku master
+Counting objects: 103, done.
+Delta compression using up to 4 threads.
+Compressing objects: 100% (49/49), done.
+Writing objects: 100% (103/103), 61.15 KiB | 0 bytes/s, done.
+Total 103 (delta 54), reused 99 (delta 52)
+remote: Compressing source files... done.
+remote: Building source:
+remote:
+remote: -----> Python app detected
+remote: -----> Installing python-3.6.3
+remote: -----> Installing pip
+remote: -----> Installing requirements with pip
+
+...
+
+remote:
+remote: -----> Discovering process types
+remote:        Procfile declares types -> web
+remote:
+remote: -----> Compressing...
+remote:        Done: 164.3M
+remote: -----> Launching...
+remote:        Released v4
+remote:        https://heroku-model-deploy.herokuapp.com/ deployed to Heroku
+remote:
+remote: Verifying deploy... done.
+To https://git.heroku.com/heroku-model-deploy.git
+ * [new branch]      master -> master
+```
+ And boom! We're done and deployed! You can actually see this working by executing
+ some of the curl commands that we saw before but using `https://<your-app-name>.herokuapp.com`
+ rather than `http://localhost` like we saw earlier. For my app it looks like the following:
+ 
+ ```
+ ~ > curl -X POST https://heroku-model-deploy.herokuapp.com/predict -d '{"id": 0, "observation": {"Age": 22.0, "Cabin": null, "Embarked": "S", "Fare": 7.25, "Parch": 0, "Pclass": 3, "Sex": "male", "SibSp": 1}}' -H "Content-Type:application/json"
+{
+  "proba": 0.09264179297127445
+}
+ ```
+ 
+ And we can recieve updates like the following:
+ 
+ ```bash
+~ > curl -X POST https://heroku-model-deploy.herokuapp.com/update -d '{"id": 0, "true_class": 1}' -H "Content-Type:application/json"
+{
+  "id": 1,
+  "observation": "{\"id\": 0, \"observation\": {\"Age\": 22.0, \"Cabin\": null, \"Embarked\": \"S\", \"Fare\": 7.25, \"Parch\": 0, \"Pclass\": 3, \"Sex\": \"male\", \"SibSp\": 1}}",
+  "observation_id": 0,
+  "proba": 0.0926418,
+  "true_class": 1
+}
+```
 
 ## Development
 
