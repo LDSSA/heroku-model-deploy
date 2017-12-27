@@ -448,7 +448,11 @@ def update():
 ```
 
 Assuming that we have already processed an observation with id=0, we
-can now recieve and record the true outcome.
+can now recieve and record the true outcome. Imagine that it is discovered
+later on that the person with id=0 didn't survive the titanic disaster. They
+would probably enter something into a content management system that
+would then trigger a call to your server that would end up looking like
+the following:
 
 ```bash
 ~ > curl -X POST http://localhost:5000/update -d '{"id": 0, "true_class": 1}'  -H "Content-Type:application/json"
@@ -472,7 +476,88 @@ It's cool and all that we can run the servers on our own machines. However, it d
 do much good in terms of making the model available to the rest of the world. All this
 `localhost` stuff doesn't help anybody that's not typing on your local machine.
 
-So all the work 
+So let's take all of the work we've done getting this running and put it on heroku
+where it can generate real business value. For this part, you can use any server
+that has a static IP address though since we want to avoid the overhead of administering
+our own server, we will use a servive to do this for us called [heroku](https://www.heroku.com/)
+This is one of the oldest managed platforms out there and is quite robust, well-known, and
+documented. However, be careful before you move forward with a big project o Heroku - 
+it can get CRAZY expensive REALLY fast.
+
+However, for our purposes, they offer a free tier webserver and database that is enough to suit our
+needs and we can do deployments in a few commands super easily. This may be a bit tough
+for some of you but trust me: the alternative of admining your own server is MUCH more difficult.
+
+### Sign up and set up at heroku
+
+Go to the [signup page](https://signup.heroku.com/) and register for the free tier.
+
+Once this is all done, go to the [dashboard](https://dashboard.heroku.com/apps) and create a new
+app:
+
+![create new app](https://i.imgur.com/WKTLhyC.png)
+
+Then on the next screen, give it a name and make sure that it's in the Europe zone. It won't
+kill anobody to have it in the land of the free but it's kinda far...
+
+![select name and region](https://i.imgur.com/oUPNzOk.png)
+
+Once this is done, select "create app" and you'll be sent to a page that's a bit intimidating
+beacuse it just has a lot of stuff. Don't worry though, it's pretty simple what we need
+to do next.
+
+First up, make sure that you select the Heroku Git deployment method. It should already be selected
+so I don't think you'll need to do anything.
+
+![heroku git](https://i.imgur.com/xt0dAhq.png)
+
+One last bit is missing here: the database. We are going to use a big boy database
+called postgresql and luckily heroku has a free tier that allows you to store
+up to 10,000 entries which is enough for our purposes. To add the database, navigate
+to `Resources` and search for `postgres`, then select `Heroku Postgres` and the
+`Hobby dev - free` tier:
+
+![add postgres](https://i.imgur.com/rZvNnuB.png)
+
+### No lets deploy the titanic model
+
+Let's deploy the server that's contained in this repository. The code is in `app.py` and
+there's a few other files that are required but we'll go over those a bit later.
+
+First step toward deployment is to make sure that this repo is cloned on your local
+machine.
+
+Once this is done, you will want to download and install the 
+[heroku cli](https://devcenter.heroku.com/articles/heroku-cli).
+
+After the heroku cli is installed, you'll need to open a command prompt and
+log in. You will use the same credentials that you use to log in through the
+web interface with and it should look something like this:
+
+```bash
+~ > heroku login
+Enter your Heroku credentials:
+Email: hopkins.samuel@gmail.com
+Password: *************************
+Logged in as hopkins.samuel@gmail.com
+```
+
+Great! now when you execute commands on your local machine, the heroku cli will know
+who you are!
+
+Now you will want to navigate on the command line to the location of the folder in which
+you cloned the repository. It should look something like this:
+
+```bash
+~ > cd ldssa/heroku-model-deploy/
+heroku-model-deploy master > ls
+Deserialize and use.ipynb	README.md			columns.json			requirements.txt
+LICENSE				Train and Serialize.ipynb	dtypes.pickle			titanic.csv
+Procfile			app.py
+```
+
+And make sure that heroku knows about the app you just created
+
 
 ## Development
 
