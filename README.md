@@ -1,8 +1,19 @@
-## IMPORTANT NOTE
-
-This repo is still in development! You may look for now but until I give the signal, it could change at any moment!
-
 # Scikit model behind flask app on heroku
+
+## tl;dr
+
+You can deploy your own model by
+
+1. Copying the contents of this repo to a new directory
+1. Replace `pipeline.pickle`, `dtypes.pickle`, and `columns.json` with
+   your own.
+1. [Deploy to heroku](https://github.com/LDSSA/heroku-model-deploy#deploy-to-heroku)
+
+You'll probably run into a few issues along the way which is why you'll at least want to
+skim the contents of the notebooks and this README so you can at least have an idea of
+where to look when you hit a bump in the road.
+
+## Intro
 
 This is a very simplistic yet effective way to deploy a scikit binary
 classifier behind a HTTP server on heroku.
@@ -18,7 +29,7 @@ There are 4 main topics to cover here
 1. Deployment to heroku
     - Also covered here in the readme
 
-### Before continuing
+## Before continuing
 
 Topic #1 is the only one that is not covered here in this readme. It is covered in two notebooks
 that you must read before moving on with the rest of this README.
