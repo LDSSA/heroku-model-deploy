@@ -31,6 +31,23 @@ that arrives for prediction.
 to do with deserialization so that you can re-use a model on new observations without having to re-train
 it.
 
+## Virtualenvs
+
+You'll need to use virtualenvs for this one, anaconda will probably not do the trick.
+All of the necessary dependencies are already in `requirements.txt` so you should
+be able to start up a new virtual environment by
+
+1. Installing [python3.6.3](https://www.python.org/downloads/release/python-363/)
+1. Execute
+```
+python3.6 -m venv ./venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+Now you should have everything installed that you need. The rest of the tutorial should be done
+in this virtual environment so be sure to activate it before you start using it.
+
 ## Flask
 
 Have you already read and understood the notebooks on serialiation? Have you already tested your understanding
@@ -48,10 +65,12 @@ flask and be reasonably justified in it.
 
 ### First steps
 
+#### Get a project started
+
 In order to use flask, you will need to be writing some code in a regular
 python file - no more notebooks here. The first step (assuming you have already
-done `pip install flask` is to import it at the top of the file. Let's pretend
-that we are working in a file called `app.py`
+done `pip install -r requirements.txt` is to import it at the top of the file. Let's pretend
+that we are working in a file called `app.py` in our newly created virtual environment.
 
 ```py
 # the request object does exactly what the name suggests: holds
