@@ -549,7 +549,7 @@ to `Resources` and search for `postgres`, then select `Heroku Postgres` and the
 
 ![add postgres](https://i.imgur.com/rZvNnuB.png)
 
-### No lets deploy the titanic model
+### Now lets deploy the titanic model
 
 Let's deploy the server that's contained in this repository. The code is in `app.py` and
 there's a few other files that are required but we'll go over those a bit later.
