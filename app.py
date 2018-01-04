@@ -93,6 +93,7 @@ def predict():
         p.save()
     except:
         raise
+        pass
     
     return jsonify({'proba': proba})
 
