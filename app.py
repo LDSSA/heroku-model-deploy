@@ -1,3 +1,4 @@
+import requests
 import os
 import json
 import pickle
@@ -91,8 +92,8 @@ def predict():
     )
     try:
         p.save()
-    except:
-        print(request.headers) 
+    except requests.exceptions.HTTPError as errh:
+        print("Http Error:", errh)
     
     return jsonify({'proba': proba})
 
