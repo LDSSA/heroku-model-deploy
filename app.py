@@ -92,7 +92,7 @@ def predict():
     try:
         p.save()
     except:
-        pass
+        raise RuntimeError()
     
     return jsonify({'proba': proba})
 
