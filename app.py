@@ -92,8 +92,8 @@ def predict():
     )
     try:
         p.save()
-    except requests.exceptions.HTTPError as errh:
-        print("Http Error:", errh)
+    except:
+        raise
     
     return jsonify({'proba': proba})
 
