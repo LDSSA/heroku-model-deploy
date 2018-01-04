@@ -2,12 +2,13 @@ import os
 import json
 import pickle
 import pandas as pd
+import peewee
 import psycopg2
 from flask import Flask, jsonify, request
 from peewee import (
     SqliteDatabase, PostgresqlDatabase, Model, IntegerField,
     FloatField, BooleanField, TextField,
-)
+    IntegrityError)
 from playhouse.shortcuts import model_to_dict
 
 
@@ -92,7 +93,7 @@ def predict():
     )
     try:
         p.save()
-    except psycopg2.IntegrityError as e:
+    except peewee.IntegrityError:
         print("Duplicated value - still need to work on the e")
     
     return jsonify({'probabilidade': proba})
