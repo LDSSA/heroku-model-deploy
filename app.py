@@ -91,9 +91,8 @@ def predict():
     )
     try:
         p.save()
-    except:
-        raise
-        pass
+    except IntegrityError as e:
+        print("Duplicated value - still need to work on the e")
     
     return jsonify({'proba': proba})
 
