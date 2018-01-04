@@ -2,6 +2,7 @@ import os
 import json
 import pickle
 import pandas as pd
+import psycopg2
 from flask import Flask, jsonify, request
 from peewee import (
     SqliteDatabase, PostgresqlDatabase, Model, IntegerField,
@@ -94,7 +95,7 @@ def predict():
     except psycopg2.IntegrityError as e:
         print("Duplicated value - still need to work on the e")
     
-    return jsonify({'proba': proba})
+    return jsonify({'probabilidade': proba})
 
 
 
