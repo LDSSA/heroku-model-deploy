@@ -91,7 +91,7 @@ def predict():
     )
     try:
         p.save()
-    except peewee.IntegrityError as e:
+    except psycopg2.IntegrityError as e:
         print("Duplicated value - still need to work on the e")
     
     return jsonify({'proba': proba})
