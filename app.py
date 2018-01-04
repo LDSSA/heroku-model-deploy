@@ -97,6 +97,7 @@ def predict():
     return jsonify({'proba': proba})
 
 
+
 @app.route('/update', methods=['POST'])
 def update():
     obs = request.get_json()
@@ -104,6 +105,7 @@ def update():
     p.true_class = obs['true_class']
     p.save()
     return jsonify(model_to_dict(p))
+
 
 
 @app.route('/list-db-contents')
