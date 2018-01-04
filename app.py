@@ -92,7 +92,7 @@ def predict():
     try:
         p.save()
     except:
-        raise 
+        print(request.headers) 
     
     return jsonify({'proba': proba})
 
