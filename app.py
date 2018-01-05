@@ -101,7 +101,7 @@ def predict():
         print('Duplicated Id: ' + str(IntegrityError))
         pass
     
-    return jsonify({'pro': proba})
+    return jsonify({'probb': proba})
 
 
 
