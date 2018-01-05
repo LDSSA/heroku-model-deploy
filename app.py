@@ -73,6 +73,9 @@ with open('dtypes.pickle', 'rb') as fh:
 
 app = Flask(__name__)
 
+@app.route('/', methods=['GET'])
+def index():
+    return('Hello local')
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -93,10 +96,10 @@ def predict():
     )
     try:
         p.save()
-    except IntegrityError:
-        print("Duplicated value - still need to work on the e")
+    except:
+        raise IntegrityError
     
-    return jsonify({'pr': proba})
+    return jsonify({'pro': proba})
 
 
 
