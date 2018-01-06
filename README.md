@@ -1,8 +1,19 @@
-## IMPORTANT NOTE
-
-This repo is still in development! You may look for now but until I give the signal, it could change at any moment!
-
 # Scikit model behind flask app on heroku
+
+## tl;dr
+
+You can deploy your own model by
+
+1. Copying the contents of this repo to a new directory
+1. Replace `pipeline.pickle`, `dtypes.pickle`, and `columns.json` with
+   your own.
+1. [Deploy to heroku](https://github.com/LDSSA/heroku-model-deploy#deploy-to-heroku)
+
+You'll probably run into a few issues along the way which is why you'll at least want to
+skim the contents of the notebooks and this README so you can at least have an idea of
+where to look when you hit a bump in the road.
+
+## Intro
 
 This is a very simplistic yet effective way to deploy a scikit binary
 classifier behind a HTTP server on heroku.
@@ -18,7 +29,7 @@ There are 4 main topics to cover here
 1. Deployment to heroku
     - Also covered here in the readme
 
-### Before continuing
+## Before continuing
 
 Topic #1 is the only one that is not covered here in this readme. It is covered in two notebooks
 that you must read before moving on with the rest of this README.
@@ -30,6 +41,23 @@ that arrives for prediction.
 [Notebook #2](https://github.com/LDSSA/heroku-example/blob/master/Deserialize%20and%20use.ipynb) has
 to do with deserialization so that you can re-use a model on new observations without having to re-train
 it.
+
+## Virtualenvs
+
+You'll need to use virtualenvs for this one, anaconda will probably not do the trick.
+All of the necessary dependencies are already in `requirements.txt` so you should
+be able to start up a new virtual environment by
+
+1. Installing [python3.6.3](https://www.python.org/downloads/release/python-363/)
+1. Execute
+```
+python3.6 -m venv ./venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+Now you should have everything installed that you need. The rest of the tutorial should be done
+in this virtual environment so be sure to activate it before you start using it.
 
 ## Flask
 
@@ -48,10 +76,12 @@ flask and be reasonably justified in it.
 
 ### First steps
 
+#### Get a project started
+
 In order to use flask, you will need to be writing some code in a regular
 python file - no more notebooks here. The first step (assuming you have already
-done `pip install flask` is to import it at the top of the file. Let's pretend
-that we are working in a file called `app.py`
+done `pip install -r requirements.txt` is to import it at the top of the file. Let's pretend
+that we are working in a file called `app.py` in our newly created virtual environment.
 
 ```py
 # the request object does exactly what the name suggests: holds
@@ -448,7 +478,11 @@ def update():
 ```
 
 Assuming that we have already processed an observation with id=0, we
-can now recieve and record the true outcome.
+can now recieve and record the true outcome. Imagine that it is discovered
+later on that the person with id=0 didn't survive the titanic disaster. They
+would probably enter something into a content management system that
+would then trigger a call to your server that would end up looking like
+the following:
 
 ```bash
 ~ > curl -X POST http://localhost:5000/update -d '{"id": 0, "true_class": 1}'  -H "Content-Type:application/json"
@@ -465,6 +499,215 @@ Now to wrap it all up, the way that we can interpret this sequence of events is 
 
 1. We provided a prediction of 0.092 probability of survival
 1. We found out later that the person didn't survive
+
+## Deploy to Heroku
+
+It's cool and all that we can run the servers on our own machines. However, it doesn't
+do much good in terms of making the model available to the rest of the world. All this
+`localhost` stuff doesn't help anybody that's not typing on your local machine.
+
+So let's take all of the work we've done getting this running and put it on heroku
+where it can generate real business value. For this part, you can use any server
+that has a static IP address though since we want to avoid the overhead of administering
+our own server, we will use a servive to do this for us called [heroku](https://www.heroku.com/)
+This is one of the oldest managed platforms out there and is quite robust, well-known, and
+documented. However, be careful before you move forward with a big project o Heroku - 
+it can get CRAZY expensive REALLY fast.
+
+However, for our purposes, they offer a free tier webserver and database that is enough to suit our
+needs and we can do deployments in a few commands super easily. This may be a bit tough
+for some of you but trust me: the alternative of admining your own server is MUCH more difficult.
+
+### Sign up and set up at heroku
+
+Go to the [signup page](https://signup.heroku.com/) and register for the free tier.
+
+Once this is all done, go to the [dashboard](https://dashboard.heroku.com/apps) and create a new
+app:
+
+![create new app](https://i.imgur.com/WKTLhyC.png)
+
+Then on the next screen, give it a name and make sure that it's in the Europe zone. It won't
+kill anobody to have it in the land of the free but it's kinda far...
+
+![select name and region](https://i.imgur.com/oUPNzOk.png)
+
+Once this is done, select "create app" and you'll be sent to a page that's a bit intimidating
+beacuse it just has a lot of stuff. Don't worry though, it's pretty simple what we need
+to do next.
+
+First up, make sure that you select the Heroku Git deployment method. It should already be selected
+so I don't think you'll need to do anything.
+
+![heroku git](https://i.imgur.com/xt0dAhq.png)
+
+One last bit is missing here: the database. We are going to use a big boy database
+called postgresql and luckily heroku has a free tier that allows you to store
+up to 10,000 entries which is enough for our purposes. To add the database, navigate
+to `Resources` and search for `postgres`, then select `Heroku Postgres` and the
+`Hobby dev - free` tier:
+
+![add postgres](https://i.imgur.com/rZvNnuB.png)
+
+### Now lets deploy the titanic model
+
+Let's deploy the server that's contained in this repository. The code is in `app.py` and
+there's a few other files that are required but we'll go over those a bit later.
+
+First step toward deployment is to make sure that this repo is cloned on your local
+machine.
+
+Once this is done, you will want to download and install the 
+[heroku cli](https://devcenter.heroku.com/articles/heroku-cli).
+
+After the heroku cli is installed, you'll need to open a command prompt and
+log in. You will use the same credentials that you use to log in through the
+web interface with and it should look something like this:
+
+```bash
+~ > heroku login
+Enter your Heroku credentials:
+Email: hopkins.samuel@gmail.com
+Password: *************************
+Logged in as hopkins.samuel@gmail.com
+```
+
+Great! now when you execute commands on your local machine, the heroku cli will know
+who you are!
+
+Now you will want to navigate on the command line to the location of the folder in which
+you cloned the repository. It should look something like this:
+
+```bash
+~ > cd ldssa/heroku-model-deploy/
+heroku-model-deploy master > ls
+Deserialize and use.ipynb	README.md			columns.json			requirements.txt
+LICENSE				Train and Serialize.ipynb	dtypes.pickle			titanic.csv
+Procfile			app.py
+```
+
+And make sure that heroku knows about the app you just created by adding a git
+remote by executing the following command but replacing "heroku-model-deploy"
+with the name of the app you just created:
+
+```bash
+heroku-model-deploy master > heroku git:remote -a heroku-model-deploy
+set git remote heroku to https://git.heroku.com/heroku-model-deploy.git
+```
+
+One last command and our model will happily be depoyed to the heroku
+cloud:
+```bash
+heroku-model-deploy master > git push heroku master
+Counting objects: 103, done.
+Delta compression using up to 4 threads.
+Compressing objects: 100% (49/49), done.
+Writing objects: 100% (103/103), 61.15 KiB | 0 bytes/s, done.
+Total 103 (delta 54), reused 99 (delta 52)
+remote: Compressing source files... done.
+remote: Building source:
+remote:
+remote: -----> Python app detected
+remote: -----> Installing python-3.6.3
+remote: -----> Installing pip
+remote: -----> Installing requirements with pip
+
+...
+
+remote:
+remote: -----> Discovering process types
+remote:        Procfile declares types -> web
+remote:
+remote: -----> Compressing...
+remote:        Done: 164.3M
+remote: -----> Launching...
+remote:        Released v4
+remote:        https://heroku-model-deploy.herokuapp.com/ deployed to Heroku
+remote:
+remote: Verifying deploy... done.
+To https://git.heroku.com/heroku-model-deploy.git
+ * [new branch]      master -> master
+```
+ And boom! We're done and deployed! You can actually see this working by executing
+ some of the curl commands that we saw before but using `https://<your-app-name>.herokuapp.com`
+ rather than `http://localhost` like we saw earlier. For my app it looks like the following:
+ 
+ ```
+ ~ > curl -X POST https://heroku-model-deploy.herokuapp.com/predict -d '{"id": 0, "observation": {"Age": 22.0, "Cabin": null, "Embarked": "S", "Fare": 7.25, "Parch": 0, "Pclass": 3, "Sex": "male", "SibSp": 1}}' -H "Content-Type:application/json"
+{
+  "proba": 0.09264179297127445
+}
+ ```
+ 
+ And we can recieve updates like the following:
+ 
+ ```bash
+~ > curl -X POST https://heroku-model-deploy.herokuapp.com/update -d '{"id": 0, "true_class": 1}' -H "Content-Type:application/json"
+{
+  "id": 1,
+  "observation": "{\"id\": 0, \"observation\": {\"Age\": 22.0, \"Cabin\": null, \"Embarked\": \"S\", \"Fare\": 7.25, \"Parch\": 0, \"Pclass\": 3, \"Sex\": \"male\", \"SibSp\": 1}}",
+  "observation_id": 0,
+  "proba": 0.0926418,
+  "true_class": 1
+}
+```
+
+You can see the logs (which is helpful for debugging) with the `heroku logs` command.
+Here are the logs for the two calls we just made:
+
+```
+heroku-model-deploy master > heroku logs -n 5
+2017-12-27T20:14:59.351793+00:00 app[web.1]: [2017-12-27 20:14:59 +0000] [4] [INFO] Using worker: sync
+2017-12-27T20:14:59.359149+00:00 app[web.1]: [2017-12-27 20:14:59 +0000] [8] [INFO] Booting worker with pid: 8
+2017-12-27T20:14:59.371891+00:00 app[web.1]: [2017-12-27 20:14:59 +0000] [9] [INFO] Booting worker with pid: 9
+2017-12-27T20:15:00.678404+00:00 heroku[web.1]: State changed from starting to up
+2017-12-27T20:19:25.944435+00:00 heroku[router]: at=info method=POST path="/predict" host=heroku-model-deploy.herokuapp.com request_id=79138602-5b95-497a-9b69-c2528a2bbfc9 fwd="86.166.46.98" dyno=web.1 connect=0ms service=496ms status=200 bytes=187 protocol=https
+2017-12-27T20:20:46.033529+00:00 heroku[router]: at=info method=POST path="/update" host=heroku-model-deploy.herokuapp.com request_id=cc92e857-895d-425b-ab00-a92862e1253e fwd="86.166.46.98" dyno=web.1 connect=1ms service=9ms status=200 bytes=417 protocol=https
+```
+
+### Last few notes
+
+There were are few additional changes to `app.py` and the rest of the repo that we haven't covered yet so
+let's get that out of the way. You probably won't need to know much about them but if you are having
+troubleshooting issues, knowing the following may come in handy.
+
+#### The db connector
+
+Instead of having just an sqlite connector, we needed to add another block of code that would
+detect if it is being run on heroku or not and if so, connect to the postgresql database. We know
+that we are on heroku if there is a `DATABASE_URL` environment variable.
+
+```
+if 'DATABASE_URL' in os.environ:
+    db_url = os.environ['DATABASE_URL']
+    dbname = db_url.split('@')[1].split('/')[1]
+    user = db_url.split('@')[0].split(':')[1].lstrip('//')
+    password = db_url.split('@')[0].split(':')[2]
+    host = db_url.split('@')[1].split('/')[0].split(':')[0]
+    port = db_url.split('@')[1].split('/')[0].split(':')[1]
+    DB = PostgresqlDatabase(
+        dbname,
+        user=user,
+        password=password,
+        host=host,
+        port=port,
+    )
+else:
+    DB = SqliteDatabase('predictions.db')
+```
+
+#### The procfile
+
+The heroku [Procfile](https://devcenter.heroku.com/articles/procfile) is how
+we tell heroku to use the code we have deployed to it. The contents of ours
+is very simple and tells [gunicorn](http://gunicorn.org/) that there's an `app.py`
+file and inside of that file, theres an object called `app` that contains a 
+[wsgi](https://en.wikipedia.org/wiki/Web_Server_Gateway_Interface) server that it
+can use to listen for incoming connections:
+
+```
+web: gunicorn app:app
+```
 
 ## Development
 
