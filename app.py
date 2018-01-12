@@ -89,7 +89,11 @@ def predict():
         proba=proba,
         observation=request.data,
     )
-    p.save()
+    try:
+        p.save()
+    except:
+        return('Duplicated ID - already in the db')
+    
     return jsonify({'proba': proba})
 
 
