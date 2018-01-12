@@ -3,7 +3,6 @@ import json
 import pickle
 import pandas as pd
 import peewee
-import psycopg2
 from flask import Flask, jsonify, request
 from peewee import (
     SqliteDatabase, PostgresqlDatabase, Model, IntegerField,
