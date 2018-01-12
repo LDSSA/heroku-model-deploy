@@ -97,9 +97,8 @@ def predict():
     try:
         p.save()
     except:
-        print('test')
-        print('Duplicated Id: ' + str(IntegrityError))
-        pass
+        return ('Duplicated Id')
+        
     
     return jsonify({'probb': proba})
 
