@@ -2,11 +2,12 @@ import os
 import json
 import pickle
 import pandas as pd
+import peewee
 from flask import Flask, jsonify, request
 from peewee import (
     SqliteDatabase, PostgresqlDatabase, Model, IntegerField,
     FloatField, BooleanField, TextField,
-)
+    IntegrityError)
 from playhouse.shortcuts import model_to_dict
 
 
@@ -71,6 +72,9 @@ with open('dtypes.pickle', 'rb') as fh:
 
 app = Flask(__name__)
 
+@app.route('/', methods=['GET'])
+def index():
+    return('Hello local')
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -89,8 +93,14 @@ def predict():
         proba=proba,
         observation=request.data,
     )
-    p.save()
-    return jsonify({'proba': proba})
+    try:
+        p.save()
+    except:
+        return ('Duplicated Id')
+        
+    
+    return jsonify({'probb': proba})
+
 
 
 @app.route('/update', methods=['POST'])
@@ -100,6 +110,7 @@ def update():
     p.true_class = obs['true_class']
     p.save()
     return jsonify(model_to_dict(p))
+
 
 
 @app.route('/list-db-contents')
