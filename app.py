@@ -1,11 +1,12 @@
 import os
 import json
 import pickle
+from sklearn.externals import joblib
 import pandas as pd
 from flask import Flask, jsonify, request
 from peewee import (
     SqliteDatabase, PostgresqlDatabase, Model, IntegerField,
-    FloatField, BooleanField, TextField,
+    FloatField, TextField, IntegrityError
 )
 from playhouse.shortcuts import model_to_dict
 
@@ -53,10 +54,7 @@ DB.create_tables([Prediction], safe=True)
 with open('columns.json') as fh:
     columns = json.load(fh)
 
-
-with open('pipeline.pickle', 'rb') as fh:
-    pipeline = pickle.load(fh)
-
+pipeline = joblib.load('pipeline.pickle')
 
 with open('dtypes.pickle', 'rb') as fh:
     dtypes = pickle.load(fh)
@@ -87,9 +85,18 @@ def predict():
     p = Prediction(
         observation_id=_id,
         proba=proba,
-        observation=request.data,
+        observation=request.data
     )
-    p.save()
+    try:
+        p.save()
+    except IntegrityError:
+        print("Id {} already exists, updating instead of inserting".format(_id))
+        (Prediction
+            .update(proba=proba, observation=request.data)
+            .where(Prediction.observation_id == _id)
+            .execute()
+         )
+
     return jsonify({'proba': proba})
 
 
@@ -113,5 +120,4 @@ def list_db_contents():
 ########################################
 
 if __name__ == "__main__":
-    app.run(debug=True)
-
+    app.run(debug=True, port=5000)
