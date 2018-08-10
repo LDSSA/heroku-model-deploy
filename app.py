@@ -91,8 +91,8 @@ def predict():
     try:
         p.save()
     except IntegrityError:
-        error_msg = "ERROR: Observation ID: '{}' already exists".format(_id)
-        response["error"] = error_msg
+        error_msg = 'Observation ID: "{}" already exists'.format(_id)
+        response['error'] = error_msg
         print(error_msg)
         DB.rollback()
     return jsonify(response)
@@ -101,10 +101,14 @@ def predict():
 @app.route('/update', methods=['POST'])
 def update():
     obs = request.get_json()
-    p = Prediction.get(Prediction.observation_id == obs['id'])
-    p.true_class = obs['true_class']
-    p.save()
-    return jsonify(model_to_dict(p))
+    try:
+        p = Prediction.get(Prediction.observation_id == obs['id'])
+        p.true_class = obs['true_class']
+        p.save()
+        return jsonify(model_to_dict(p))
+    except Prediction.DoesNotExist:
+        error_msg = 'Observation ID: "{}" does not exist'.format(obs['id'])
+        return jsonify({'error': error_msg})
 
 
 @app.route('/list-db-contents')

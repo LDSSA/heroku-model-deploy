@@ -523,10 +523,14 @@ introduced one new concept of database querying through the ORM.
 @app.route('/update', methods=['POST'])
 def update():
     obs = request.get_json()
-    p = Prediction.get(Prediction.observation_id == obs['id'])
-    p.true_class = obs['true_class']
-    p.save()
-    return jsonify(model_to_dict(p))
+    try:
+        p = Prediction.get(Prediction.observation_id == obs['id'])
+        p.true_class = obs['true_class']
+        p.save()
+        return jsonify(model_to_dict(p))
+    except Prediction.DoesNotExist:
+        error_msg = 'Observation ID: "{}" does not exist'.format(obs['id'])
+        return jsonify({'error': error_msg})
 ```
 
 Assuming that we have already processed an observation with id=0, we
@@ -546,6 +550,8 @@ the following:
   "true_class": 1
 }
 ```
+
+Similarly to when we saved the prediction requests, we validate that the observation_id we want to update actually exists.
 
 Now to wrap it all up, the way that we can interpret this sequence of events is the following:
 
