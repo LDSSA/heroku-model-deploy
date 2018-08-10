@@ -50,6 +50,8 @@ All of the necessary dependencies are already in `requirements.txt`.
 The recommended new way to manage virtual environments is via [pipenv](https://github.com/pypa/pipenv).
 It aims to replace the most traditional way of dealing with virtual environments in python, [virtualenv](https://virtualenv.pypa.io/en/stable/).
 
+**NOTE:** Dear Windows users, there is a time in every Data Scientist's life when using Windows might not work. This is the perfect moment to install the Windows subsystem for Linux, which allows Windows 10 developers to run Linux environments directly on Windows, without the overhead of a virtual machine. [Here]() is a great tutorial on how to
+
 After installing pipenv, from the project folder (i.e., where this readme lives in your computer), you can create a local virtual environment contained in this folder and install the project dependencies (included on a file named `requirements.txt` with:
 
 ```
@@ -194,7 +196,7 @@ def predict():
     return jsonify({
         'prediction': at_risk
     })
-    
+
 if __name__ == "__main__":
     app.run(debug=True)
 ```
@@ -291,7 +293,7 @@ as well as the true outcomes should we be luckly enough to find out.
 When working with databases in code, you generally want to be using a layer of abstraction
 called an [ORM](https://en.wikipedia.org/wiki/Object-relational_mapping). For this
 exercise we will use a very simplistic ORM called [peewee](http://docs.peewee-orm.com/en/latest/index.html).
-This will allow us to use a local database called [sqlite](https://en.wikipedia.org/wiki/SQLite)
+This will allow us to use a local database called [sqlite](https://en.wikipedia.org/wiki/SQLite) (which is basically a file)
 when we are developing on our laptops and use a more production-ready database called
 [postgresql](https://en.wikipedia.org/wiki/PostgreSQL) when deploying to heroku with very
 little change to our code.
@@ -599,7 +601,7 @@ so I don't think you'll need to do anything.
 One last bit is missing here: the database. We are going to use a big boy database
 called postgresql and luckily heroku has a free tier that allows you to store
 up to 10,000 entries which is enough for our purposes (this means that you should try to be conservative
-with how you connect to the app and dont go crazy with it, if the database gets full your app will stop working!)
+with how you connect to the app and dont go crazy with it, if the database gets full your app will stop working!, you can check heroku's postgresql guide [here](https://devcenter.heroku.com/articles/heroku-postgresql)).
 
 To add the database, navigate to `Resources` and search for `postgres`, then select `Heroku Postgres` and the
 `Hobby dev - free` tier:
@@ -651,9 +653,11 @@ with the name of the app you just created:
 heroku-model-deploy master > heroku git:remote -a heroku-model-deploy
 set git remote heroku to https://git.heroku.com/heroku-model-deploy.git
 ```
+Now we can push to heroku and our app will be deployed **IN THE CLOUD, WAAAT?!?!** It is important to remember, only
+the changes that you have commited (with git add & git commit) will be deployed. So if you
+change your pipeline and retrain a different model you need to commit the changes before
+pushing to heroku).
 
-One last command and our model will happily be depoyed to the heroku
-cloud:
 ```bash
 heroku-model-deploy master > git push heroku master
 Counting objects: 103, done.
@@ -732,7 +736,8 @@ troubleshooting issues, knowing the following may come in handy.
 
 Instead of having just an sqlite connector, we needed to add another block of code that would
 detect if it is being run on heroku or not and if so, connect to the postgresql database. We know
-that we are on heroku if there is a `DATABASE_URL` environment variable.
+that we are on heroku if there is a `DATABASE_URL` environment variable. When we add the postgres database in heroku, heroku will
+automatically add an environment variable (DATABASE_URL) with the conexion we need.
 
 ```
 if 'DATABASE_URL' in os.environ:
@@ -766,38 +771,7 @@ can use to listen for incoming connections:
 web: gunicorn app:app
 ```
 
-## Development
-
-To run it locally, create a virtual environment
-
-```
-python3.6 -m venv ./venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
-
-### Example observation
-
-New observation comes in
-
-```
-~ > curl -X POST http://localhost:5000/predict -d '{"id": 0, "observation": {"Age": 22.0, "Cabin": null, "Embarked": "S", "Fare": 7.25, "Parch": 0, "Pclass": 3, "Sex": "male", "SibSp": 1}}' -H "Content-Type:application/json"
-{
-  "id": 1,
-  "observation_id": 0,
-  "predicted_class": true,
-  "proba": 0.09264179297127445,
-  "true_class": null
-}
-```
-
-Get the true outcome
-
-```
-curl -X POST http://localhost:5000/update -d '{"id": 0, "true_class": 1}'  -H "Content-Type:application/json"
-```
-
-### Heroku utilities
+### Heroku useful snippets
 
 Push new code after committing it
 
@@ -809,4 +783,10 @@ Restart the server
 
 ```
 heroku ps:restart && heroku logs --tail
+```
+
+Check the latest 300 logs of your application
+
+```
+heroku logs -n 300
 ```
