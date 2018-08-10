@@ -82,7 +82,7 @@ def predict():
     obs = pd.DataFrame([observation], columns=columns).astype(dtypes)
     # now get ourselves an actual prediction of the positive class
     proba = pipeline.predict_proba(obs)[0, 1]
-    return_dict = {'proba': proba, "errors": None}
+    response = {'proba': proba}
     p = Prediction(
         observation_id=_id,
         proba=proba,
@@ -92,9 +92,10 @@ def predict():
         p.save()
     except IntegrityError:
         error_msg = "ERROR: Observation ID: '{}' already exists".format(_id)
-        return_dict["errors"] = error_msg
+        response["error"] = error_msg
         print(error_msg)
-    return jsonify(return_dict)
+        DB.rollback()
+    return jsonify(response)
 
 
 @app.route('/update', methods=['POST'])

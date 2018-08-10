@@ -437,6 +437,7 @@ def predict():
     observation = obs_dict['observation']
     obs = pd.DataFrame([observation], columns=columns).astype(dtypes)
     proba = pipeline.predict_proba(obs)[0, 1]
+    response = {'proba': proba}
     p = Prediction(
         observation_id=_id,
         proba=proba,
@@ -445,13 +446,11 @@ def predict():
     try:
         p.save()
     except IntegrityError:
-        print("Id {} already exists, updating instead of inserting".format(_id))
-        (Prediction
-            .update(proba=proba, observation=request.data)
-            .where(Prediction.observation_id == _id)
-            .execute()
-         )
-    return jsonify({'proba': proba})
+        error_msg = "ERROR: Observation ID: '{}' already exists".format(_id)
+        response["error"] = error_msg
+        print(error_msg)
+        DB.rollback()
+    return jsonify(response)
 
 
 # End webserver stuff
@@ -473,12 +472,10 @@ One piece of the code above that might not be clear at first is:
     try:
         p.save()
     except IntegrityError:
-        print("Id {} already exists, updating instead of inserting".format(_id))
-        (Prediction
-            .update(proba=proba, observation=request.data)
-            .where(Prediction.observation_id == _id)
-            .execute()
-         )
+        error_msg = "ERROR: Observation ID: '{}' already exists".format(_id)
+        response["error"] = error_msg
+        print(error_msg)
+        DB.rollback()
 ```
 
 What is this code doing?. When we receive a new prediction request, we want to store such request
@@ -491,9 +488,7 @@ again an already saved observation_id, and it will throw an `IntegrityError` (as
 the integrity of the table unique id requirement if we saved a duplicated id, right?).
 
 To avoid that we do a simple try/Except block, we make sure we are only catching the integrity error, then, for those cases
-where we try a request with the same observation_id, we will assume that is a newer version of the same id and we will update it
-instead.
-
+where we try a request with the same observation_id, we print a nice error message an we do a database rollback (to close the current save transaction that has failed).
 
 Once your app is setup like this, you can test this with the following command:
 
