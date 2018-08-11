@@ -50,7 +50,7 @@ All of the necessary dependencies are already in `requirements.txt`.
 The recommended new way to manage virtual environments is via [pipenv](https://github.com/pypa/pipenv).
 It aims to replace the most traditional way of dealing with virtual environments in python, [virtualenv](https://virtualenv.pypa.io/en/stable/).
 
-**NOTE:** Dear Windows users, there is a time in every Data Scientist's life when using Windows might not work. This is the perfect moment to install the Windows subsystem for Linux, which allows Windows 10 developers to run Linux environments directly on Windows, without the overhead of a virtual machine. [Here]() is a great tutorial on how to
+**NOTE:** Dear Windows users, there is a time in every Data Scientist's life when using Windows might not work. This is the perfect moment to install the Windows subsystem for Linux, which allows Windows 10 developers to run Linux environments directly on Windows, without the overhead of a virtual machine. [Here](https://medium.com/hugo-ferreiras-blog/using-windows-subsystem-for-linux-for-data-science-9a8e68d7610c) is a great tutorial on how to
 
 After installing pipenv, from the project folder (i.e., where this readme lives in your computer), you can create a local virtual environment contained in this folder and install the project dependencies (included on a file named `requirements.txt` with:
 
