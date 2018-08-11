@@ -740,7 +740,7 @@ detect if it is being run on heroku or not and if so, connect to the postgresql 
 that we are on heroku if there is a `DATABASE_URL` environment variable. When we add the postgres database in heroku, heroku will
 automatically add an environment variable (DATABASE_URL) with the conexion we need.
 
-```
+```py
 if 'DATABASE_URL' in os.environ:
     db_url = os.environ['DATABASE_URL']
     dbname = db_url.split('@')[1].split('/')[1]
@@ -776,18 +776,18 @@ web: gunicorn app:app
 
 Push new code after committing it
 
-```
+```bash
 git push heroku master && heroku logs --tail
 ```
 
 Restart the server
 
-```
+```bash
 heroku ps:restart && heroku logs --tail
 ```
 
 Check the latest 300 logs of your application
 
-```
+```bash
 heroku logs -n 300
 ```
