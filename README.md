@@ -463,7 +463,7 @@ if __name__ == "__main__":
 
 One piece of the code above that might not be clear at first is:
 
-```
+```py
     p = Prediction(
         observation_id=_id,
         proba=proba,
