@@ -42,19 +42,35 @@ that arrives for prediction.
 to do with deserialization so that you can re-use a model on new observations without having to re-train
 it.
 
-## Virtualenvs
+## Virtual environments
 
-You'll need to use virtualenvs for this one, anaconda will probably not do the trick.
-All of the necessary dependencies are already in `requirements.txt` so you should
-be able to start up a new virtual environment by
+You'll need to use a virtual environment for this one, anaconda will probably not do the trick.
+All of the necessary dependencies are already in `requirements.txt`.
 
-1. Installing [python3.6.3](https://www.python.org/downloads/release/python-363/)
-1. Execute
+The recommended new way to manage virtual environments is via [pipenv](https://github.com/pypa/pipenv).
+It aims to replace the most traditional way of dealing with virtual environments in python, [virtualenv](https://virtualenv.pypa.io/en/stable/).
+
+**NOTE:** Dear Windows users, there is a time in every Data Scientist's life when using Windows might not work. This is the perfect moment to install the Windows subsystem for Linux, which allows Windows 10 developers to run Linux environments directly on Windows, without the overhead of a virtual machine. [Here](https://medium.com/hugo-ferreiras-blog/using-windows-subsystem-for-linux-for-data-science-9a8e68d7610c) is a great tutorial on how to
+
+After installing pipenv, from the project folder (i.e., where this readme lives in your computer), you can create a local virtual environment contained in this folder and install the project dependencies (included on a file named `requirements.txt` with:
+
 ```
-python3.6 -m venv ./venv
-source venv/bin/activate
-pip install -r requirements.txt
+# make sure you are on the right project folder!
+$ pipenv install -r requirements.txt
+Creating a virtualenv for this project...
+...
+No package provided, installing all dependencies.
+Virtualenv location: /Users/...
+Installing dependencies from Pipfile.lock...
+...
 ```
+
+To activate this project's virtualenv, run the following:
+```
+$ pipenv shell
+```
+
+You can always deactivate the virtualenv by either typing `exit` or pressing `CTRL+d`
 
 Now you should have everything installed that you need. The rest of the tutorial should be done
 in this virtual environment so be sure to activate it before you start using it.
@@ -80,7 +96,7 @@ flask and be reasonably justified in it.
 
 In order to use flask, you will need to be writing some code in a regular
 python file - no more notebooks here. The first step (assuming you have already
-done `pip install -r requirements.txt` is to import it at the top of the file. Let's pretend
+done `pipenv install -r requirements.txt` is to import it at the top of the file. Let's pretend
 that we are working in a file called `app.py` in our newly created virtual environment.
 
 ```py
@@ -180,7 +196,7 @@ def predict():
     return jsonify({
         'prediction': at_risk
     })
-    
+
 if __name__ == "__main__":
     app.run(debug=True)
 ```
@@ -277,14 +293,14 @@ as well as the true outcomes should we be luckly enough to find out.
 When working with databases in code, you generally want to be using a layer of abstraction
 called an [ORM](https://en.wikipedia.org/wiki/Object-relational_mapping). For this
 exercise we will use a very simplistic ORM called [peewee](http://docs.peewee-orm.com/en/latest/index.html).
-This will allow us to use a local database called [sqlite](https://en.wikipedia.org/wiki/SQLite)
-when we are developing on our laptops and use a more production-ready database called 
+This will allow us to use a local database called [sqlite](https://en.wikipedia.org/wiki/SQLite) (which is basically a file)
+when we are developing on our laptops and use a more production-ready database called
 [postgresql](https://en.wikipedia.org/wiki/PostgreSQL) when deploying to heroku with very
 little change to our code.
 
 One cool thing that ORMs allow us to do is define the data model that we want
 to use in code. So let's use peewee to create a data model to keep track of
-predictions and the probabilities we have assigned to them. Once again, we can 
+predictions and the probabilities we have assigned to them. Once again, we can
 take care of this in a few lines of code:
 
 ```py
@@ -361,8 +377,8 @@ import pickle
 import pandas as pd
 from flask import Flask, jsonify, request
 from peewee import (
-    SqliteDatabase, Model, IntegerField, FloatField,
-    BooleanField, TextField,
+    SqliteDatabase, PostgresqlDatabase, Model, IntegerField,
+    FloatField, TextField, IntegrityError
 )
 from playhouse.shortcuts import model_to_dict
 
@@ -421,13 +437,20 @@ def predict():
     observation = obs_dict['observation']
     obs = pd.DataFrame([observation], columns=columns).astype(dtypes)
     proba = pipeline.predict_proba(obs)[0, 1]
+    response = {'proba': proba}
     p = Prediction(
         observation_id=_id,
         proba=proba,
         observation=request.data,
     )
-    p.save()
-    return jsonify({'proba': proba})
+    try:
+        p.save()
+    except IntegrityError:
+        error_msg = "ERROR: Observation ID: '{}' already exists".format(_id)
+        response["error"] = error_msg
+        print(error_msg)
+        DB.rollback()
+    return jsonify(response)
 
 
 # End webserver stuff
@@ -438,7 +461,36 @@ if __name__ == "__main__":
 
 ```
 
-You can test this with the following command:
+One piece of the code above that might not be clear at first is:
+
+```py
+    p = Prediction(
+        observation_id=_id,
+        proba=proba,
+        observation=request.data,
+    )
+    try:
+        p.save()
+    except IntegrityError:
+        error_msg = "ERROR: Observation ID: '{}' already exists".format(_id)
+        response["error"] = error_msg
+        print(error_msg)
+        DB.rollback()
+```
+
+What is this code doing?. When we receive a new prediction request, we want to store such request
+in our database (to keep track of our model performance). With peewee, we save a new Prediction (basically
+a new row in our table) with the `save()` method, which is very neat and convenient.
+
+However, because our table has a unique constraint (no two rows can have the same `observation_id` is a unique field),
+if we perform the same prediction request twice (with the same id) the system will crash because pewee can't save
+again an already saved observation_id, and it will throw an `IntegrityError` (as in, we would be asking pewee to violate
+the integrity of the table unique id requirement if we saved a duplicated id, right?).
+
+To avoid that we do a simple try/Except block, we make sure we are only catching the integrity error, then, for those cases
+where we try a request with the same observation_id, we print a nice error message an we do a database rollback (to close the current save transaction that has failed).
+
+Once your app is setup like this, you can test this with the following command:
 
 ```bash
 ~ > curl -X POST http://localhost:5000/predict -d '{"id": 0, "observation": {"Age": 22.0, "Cabin": null, "Embarked": "S", "Fare": 7.25, "Parch": 0, "Pclass": 3, "Sex": "male", "SibSp": 1}}' -H "Content-Type:application/json"
@@ -471,10 +523,14 @@ introduced one new concept of database querying through the ORM.
 @app.route('/update', methods=['POST'])
 def update():
     obs = request.get_json()
-    p = Prediction.get(Prediction.observation_id == obs['id'])
-    p.true_class = obs['true_class']
-    p.save()
-    return jsonify(model_to_dict(p))
+    try:
+        p = Prediction.get(Prediction.observation_id == obs['id'])
+        p.true_class = obs['true_class']
+        p.save()
+        return jsonify(model_to_dict(p))
+    except Prediction.DoesNotExist:
+        error_msg = 'Observation ID: "{}" does not exist'.format(obs['id'])
+        return jsonify({'error': error_msg})
 ```
 
 Assuming that we have already processed an observation with id=0, we
@@ -495,6 +551,8 @@ the following:
 }
 ```
 
+Similarly to when we saved the prediction requests, we validate that the observation_id we want to update actually exists.
+
 Now to wrap it all up, the way that we can interpret this sequence of events is the following:
 
 1. We provided a prediction of 0.092 probability of survival
@@ -511,7 +569,7 @@ where it can generate real business value. For this part, you can use any server
 that has a static IP address though since we want to avoid the overhead of administering
 our own server, we will use a servive to do this for us called [heroku](https://www.heroku.com/)
 This is one of the oldest managed platforms out there and is quite robust, well-known, and
-documented. However, be careful before you move forward with a big project o Heroku - 
+documented. However, be careful before you move forward with a big project o Heroku -
 it can get CRAZY expensive REALLY fast.
 
 However, for our purposes, they offer a free tier webserver and database that is enough to suit our
@@ -543,8 +601,10 @@ so I don't think you'll need to do anything.
 
 One last bit is missing here: the database. We are going to use a big boy database
 called postgresql and luckily heroku has a free tier that allows you to store
-up to 10,000 entries which is enough for our purposes. To add the database, navigate
-to `Resources` and search for `postgres`, then select `Heroku Postgres` and the
+up to 10,000 entries which is enough for our purposes (this means that you should try to be conservative
+with how you connect to the app and dont go crazy with it, if the database gets full your app will stop working!, you can check heroku's postgresql guide [here](https://devcenter.heroku.com/articles/heroku-postgresql)).
+
+To add the database, navigate to `Resources` and search for `postgres`, then select `Heroku Postgres` and the
 `Hobby dev - free` tier:
 
 ![add postgres](https://i.imgur.com/rZvNnuB.png)
@@ -557,7 +617,7 @@ there's a few other files that are required but we'll go over those a bit later.
 First step toward deployment is to make sure that this repo is cloned on your local
 machine.
 
-Once this is done, you will want to download and install the 
+Once this is done, you will want to download and install the
 [heroku cli](https://devcenter.heroku.com/articles/heroku-cli).
 
 After the heroku cli is installed, you'll need to open a command prompt and
@@ -567,9 +627,9 @@ web interface with and it should look something like this:
 ```bash
 ~ > heroku login
 Enter your Heroku credentials:
-Email: hopkins.samuel@gmail.com
+Email: hopkins.sam@puppiesarecute.com
 Password: *************************
-Logged in as hopkins.samuel@gmail.com
+Logged in as hopkins.sam@puppiesarecute.com
 ```
 
 Great! now when you execute commands on your local machine, the heroku cli will know
@@ -583,7 +643,7 @@ you cloned the repository. It should look something like this:
 heroku-model-deploy master > ls
 Deserialize and use.ipynb	README.md			columns.json			requirements.txt
 LICENSE				Train and Serialize.ipynb	dtypes.pickle			titanic.csv
-Procfile			app.py
+Procfile			app.py                      pipeline.pickle
 ```
 
 And make sure that heroku knows about the app you just created by adding a git
@@ -594,9 +654,11 @@ with the name of the app you just created:
 heroku-model-deploy master > heroku git:remote -a heroku-model-deploy
 set git remote heroku to https://git.heroku.com/heroku-model-deploy.git
 ```
+Now we can push to heroku and our app will be deployed **IN THE CLOUD, WAAAT?!?!** It is important to remember, only
+the changes that you have commited (with git add & git commit) will be deployed. So if you
+change your pipeline and retrain a different model you need to commit the changes before
+pushing to heroku).
 
-One last command and our model will happily be depoyed to the heroku
-cloud:
 ```bash
 heroku-model-deploy master > git push heroku master
 Counting objects: 103, done.
@@ -631,16 +693,16 @@ To https://git.heroku.com/heroku-model-deploy.git
  And boom! We're done and deployed! You can actually see this working by executing
  some of the curl commands that we saw before but using `https://<your-app-name>.herokuapp.com`
  rather than `http://localhost` like we saw earlier. For my app it looks like the following:
- 
+
  ```
  ~ > curl -X POST https://heroku-model-deploy.herokuapp.com/predict -d '{"id": 0, "observation": {"Age": 22.0, "Cabin": null, "Embarked": "S", "Fare": 7.25, "Parch": 0, "Pclass": 3, "Sex": "male", "SibSp": 1}}' -H "Content-Type:application/json"
 {
   "proba": 0.09264179297127445
 }
  ```
- 
+
  And we can recieve updates like the following:
- 
+
  ```bash
 ~ > curl -X POST https://heroku-model-deploy.herokuapp.com/update -d '{"id": 0, "true_class": 1}' -H "Content-Type:application/json"
 {
@@ -675,9 +737,10 @@ troubleshooting issues, knowing the following may come in handy.
 
 Instead of having just an sqlite connector, we needed to add another block of code that would
 detect if it is being run on heroku or not and if so, connect to the postgresql database. We know
-that we are on heroku if there is a `DATABASE_URL` environment variable.
+that we are on heroku if there is a `DATABASE_URL` environment variable. When we add the postgres database in heroku, heroku will
+automatically add an environment variable (DATABASE_URL) with the conexion we need.
 
-```
+```py
 if 'DATABASE_URL' in os.environ:
     db_url = os.environ['DATABASE_URL']
     dbname = db_url.split('@')[1].split('/')[1]
@@ -701,7 +764,7 @@ else:
 The heroku [Procfile](https://devcenter.heroku.com/articles/procfile) is how
 we tell heroku to use the code we have deployed to it. The contents of ours
 is very simple and tells [gunicorn](http://gunicorn.org/) that there's an `app.py`
-file and inside of that file, theres an object called `app` that contains a 
+file and inside of that file, theres an object called `app` that contains a
 [wsgi](https://en.wikipedia.org/wiki/Web_Server_Gateway_Interface) server that it
 can use to listen for incoming connections:
 
@@ -709,47 +772,22 @@ can use to listen for incoming connections:
 web: gunicorn app:app
 ```
 
-## Development
-
-To run it locally, create a virtual environment
-
-```
-python3.6 -m venv ./venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
-
-### Example observation
-
-New observation comes in
-
-```
-~ > curl -X POST http://localhost:5000/predict -d '{"id": 0, "observation": {"Age": 22.0, "Cabin": null, "Embarked": "S", "Fare": 7.25, "Parch": 0, "Pclass": 3, "Sex": "male", "SibSp": 1}}' -H "Content-Type:application/json"
-{
-  "id": 1, 
-  "observation_id": 0, 
-  "predicted_class": true, 
-  "proba": 0.09264179297127445, 
-  "true_class": null
-}
-```
-
-Get the true outcome
-
-```
-curl -X POST http://localhost:5000/update -d '{"id": 0, "true_class": 1}'  -H "Content-Type:application/json"
-```
-
-### Heroku utilities
+### Heroku useful snippets
 
 Push new code after committing it
 
-```
+```bash
 git push heroku master && heroku logs --tail
 ```
 
 Restart the server
 
-```
+```bash
 heroku ps:restart && heroku logs --tail
+```
+
+Check the latest 300 logs of your application
+
+```bash
+heroku logs -n 300
 ```

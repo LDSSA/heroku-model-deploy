@@ -5,4 +5,4 @@ flask
 gunicorn
 peewee
 psycopg2
-category_encoders
+category-encoders==1.2.6

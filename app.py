@@ -1,11 +1,12 @@
 import os
 import json
 import pickle
+from sklearn.externals import joblib
 import pandas as pd
 from flask import Flask, jsonify, request
 from peewee import (
     SqliteDatabase, PostgresqlDatabase, Model, IntegerField,
-    FloatField, BooleanField, TextField,
+    FloatField, TextField, IntegrityError
 )
 from playhouse.shortcuts import model_to_dict
 
@@ -53,10 +54,7 @@ DB.create_tables([Prediction], safe=True)
 with open('columns.json') as fh:
     columns = json.load(fh)
 
-
-with open('pipeline.pickle', 'rb') as fh:
-    pipeline = pickle.load(fh)
-
+pipeline = joblib.load('pipeline.pickle')
 
 with open('dtypes.pickle', 'rb') as fh:
     dtypes = pickle.load(fh)
@@ -84,22 +82,33 @@ def predict():
     obs = pd.DataFrame([observation], columns=columns).astype(dtypes)
     # now get ourselves an actual prediction of the positive class
     proba = pipeline.predict_proba(obs)[0, 1]
+    response = {'proba': proba}
     p = Prediction(
         observation_id=_id,
         proba=proba,
-        observation=request.data,
+        observation=request.data
     )
-    p.save()
-    return jsonify({'proba': proba})
+    try:
+        p.save()
+    except IntegrityError:
+        error_msg = 'Observation ID: "{}" already exists'.format(_id)
+        response['error'] = error_msg
+        print(error_msg)
+        DB.rollback()
+    return jsonify(response)
 
 
 @app.route('/update', methods=['POST'])
 def update():
     obs = request.get_json()
-    p = Prediction.get(Prediction.observation_id == obs['id'])
-    p.true_class = obs['true_class']
-    p.save()
-    return jsonify(model_to_dict(p))
+    try:
+        p = Prediction.get(Prediction.observation_id == obs['id'])
+        p.true_class = obs['true_class']
+        p.save()
+        return jsonify(model_to_dict(p))
+    except Prediction.DoesNotExist:
+        error_msg = 'Observation ID: "{}" does not exist'.format(obs['id'])
+        return jsonify({'error': error_msg})
 
 
 @app.route('/list-db-contents')
@@ -113,5 +122,4 @@ def list_db_contents():
 ########################################
 
 if __name__ == "__main__":
-    app.run(debug=True)
-
+    app.run(debug=True, port=5000)
