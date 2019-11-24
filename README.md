@@ -42,38 +42,9 @@ that arrives for prediction.
 to do with deserialization so that you can re-use a model on new observations without having to re-train
 it.
 
-## Virtual environments
+## Conda environments
 
-You'll need to use a virtual environment for this one, anaconda will probably not do the trick.
-All of the necessary dependencies are already in `requirements.txt`.
-
-The recommended new way to manage virtual environments is via [pipenv](https://github.com/pypa/pipenv).
-It aims to replace the most traditional way of dealing with virtual environments in python, [virtualenv](https://virtualenv.pypa.io/en/stable/).
-
-**NOTE:** Dear Windows users, there is a time in every Data Scientist's life when using Windows might not work. This is the perfect moment to install the Windows subsystem for Linux, which allows Windows 10 developers to run Linux environments directly on Windows, without the overhead of a virtual machine. [Here](https://medium.com/hugo-ferreiras-blog/using-windows-subsystem-for-linux-for-data-science-9a8e68d7610c) is a great tutorial on how to
-
-After installing pipenv, from the project folder (i.e., where this readme lives in your computer), you can create a local virtual environment contained in this folder and install the project dependencies (included on a file named `requirements.txt` with:
-
-```
-# make sure you are on the right project folder!
-$ pipenv install -r requirements.txt
-Creating a virtualenv for this project...
-...
-No package provided, installing all dependencies.
-Virtualenv location: /Users/...
-Installing dependencies from Pipfile.lock...
-...
-```
-
-To activate this project's virtualenv, run the following:
-```
-$ pipenv shell
-```
-
-You can always deactivate the virtualenv by either typing `exit` or pressing `CTRL+d`
-
-Now you should have everything installed that you need. The rest of the tutorial should be done
-in this virtual environment so be sure to activate it before you start using it.
+We use conda in the exact same way as in the [batch3-students repo](https://github.com/LDSSA/batch3-students).
 
 ## Flask
 
@@ -583,7 +554,7 @@ Go to the [signup page](https://signup.heroku.com/) and register for the free ti
 Once this is all done, go to the [dashboard](https://dashboard.heroku.com/apps) and create a new
 app:
 
-![create new app](https://i.imgur.com/WKTLhyC.png)
+![create new app](https://i.imgur.com/SYyFMV1.png)
 
 Then on the next screen, give it a name and make sure that it's in the Europe zone. It won't
 kill anobody to have it in the land of the free but it's kinda far...
@@ -622,14 +593,16 @@ Once this is done, you will want to download and install the
 
 After the heroku cli is installed, you'll need to open a command prompt and
 log in. You will use the same credentials that you use to log in through the
-web interface with and it should look something like this:
+web interface with and it should look something like the following, part of
+which is asking you to open up a browser and log in. Should be pretty
+straightforward.
 
 ```bash
 ~ > heroku login
-Enter your Heroku credentials:
-Email: hopkins.sam@puppiesarecute.com
-Password: *************************
-Logged in as hopkins.sam@puppiesarecute.com
+heroku: Press any key to open up the browser to login or q to exit:
+Opening browser to https://cli-auth.heroku.com/auth/browser/.........
+Logging in... done
+Logged in as sam@puppiesarecute.com
 ```
 
 Great! now when you execute commands on your local machine, the heroku cli will know
