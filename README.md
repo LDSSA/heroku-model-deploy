@@ -627,41 +627,54 @@ with the name of the app you just created:
 heroku-model-deploy master > heroku git:remote -a heroku-model-deploy
 set git remote heroku to https://git.heroku.com/heroku-model-deploy.git
 ```
+
+At this point, we'll need to do something a bit extra in order to be able to use
+our conda environment by specifying and configuring a heroku buildpack:
+
+```
+~ > heroku stack:set container
+Stack set. Next release on ⬢ batch3-capstone-demo will use container.
+Run git push heroku master to create a new release on ⬢ batch3-capstone-demo.
+```
+
 Now we can push to heroku and our app will be deployed **IN THE CLOUD, WAAAT?!?!** It is important to remember, only
 the changes that you have commited (with git add & git commit) will be deployed. So if you
 change your pipeline and retrain a different model you need to commit the changes before
 pushing to heroku).
 
 ```bash
-heroku-model-deploy master > git push heroku master
-Counting objects: 103, done.
-Delta compression using up to 4 threads.
-Compressing objects: 100% (49/49), done.
-Writing objects: 100% (103/103), 61.15 KiB | 0 bytes/s, done.
-Total 103 (delta 54), reused 99 (delta 52)
+Enumerating objects: 5, done.
+Counting objects: 100% (5/5), done.
+Delta compression using up to 4 threads
+Compressing objects: 100% (3/3), done.
+Writing objects: 100% (3/3), 302 bytes | 302.00 KiB/s, done.
+Total 3 (delta 2), reused 0 (delta 0)
 remote: Compressing source files... done.
 remote: Building source:
+remote: === Fetching app code
 remote:
-remote: -----> Python app detected
-remote: -----> Installing python-3.6.3
-remote: -----> Installing pip
-remote: -----> Installing requirements with pip
+remote: === Building web (Dockerfile)
+remote: Sending build context to Docker daemon  543.7kB
+remote: Step 1/6 : FROM continuumio/miniconda3
+remote: latest: Pulling from continuumio/miniconda3
+remote: b8f262c62ec6: Pulling fs layer
+remote: 0a43c0154f16: Pulling fs layer
+remote: 906d7b5da8fb: Pulling fs layer
+remote: 906d7b5da8fb: Verifying Checksum
+remote: 906d7b5da8fb: Download complete
+remote: b8f262c62ec6: Verifying Checksum
+remote: b8f262c62ec6: Download complete
+remote: 0a43c0154f16: Verifying Checksum
+remote: 0a43c0154f16: Download complete
 
 ...
 
-remote:
-remote: -----> Discovering process types
-remote:        Procfile declares types -> web
-remote:
-remote: -----> Compressing...
-remote:        Done: 164.3M
-remote: -----> Launching...
-remote:        Released v4
-remote:        https://heroku-model-deploy.herokuapp.com/ deployed to Heroku
+remote: 61c68312a080: Pushed
+remote: latest: digest: sha256:b094fd516873cea432cd199f4371d3e190bb06bbbcb436ba882d3eacc591e327 size: 1375
 remote:
 remote: Verifying deploy... done.
-To https://git.heroku.com/heroku-model-deploy.git
- * [new branch]      master -> master
+To https://git.heroku.com/batch3-capstone-demo.git
+   8eb8b66..05ae35d  master -> master
 ```
  And boom! We're done and deployed! You can actually see this working by executing
  some of the curl commands that we saw before but using `https://<your-app-name>.herokuapp.com`
