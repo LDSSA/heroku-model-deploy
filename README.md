@@ -701,6 +701,14 @@ To https://git.heroku.com/batch3-capstone-demo.git
 }
 ```
 
+How does all of this work you ask? Well it has to do with the fact
+that there exists a `Dockerfile` and `heroku.yml` files in this repo.
+Just be sure that both of these are in your repo and that they are
+committed before you `heroku push` and everything should work. If you
+do a deploy and it doesn't work, take a look at the files and see
+if you might have done something such as change a filename or something
+else that would break the boilerplate assumptions that we've made here.
+
 You can see the logs (which is helpful for debugging) with the `heroku logs` command.
 Here are the logs for the two calls we just made:
 
