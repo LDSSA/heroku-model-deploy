@@ -554,7 +554,7 @@ Go to the [signup page](https://signup.heroku.com/) and register for the free ti
 Once this is all done, go to the [dashboard](https://dashboard.heroku.com/apps) and create a new
 app:
 
-![create new app](https://i.imgur.com/WKTLhyC.png)
+![create new app](https://i.imgur.com/SYyFMV1.png)
 
 Then on the next screen, give it a name and make sure that it's in the Europe zone. It won't
 kill anobody to have it in the land of the free but it's kinda far...
