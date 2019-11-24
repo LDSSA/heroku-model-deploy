@@ -10,3 +10,5 @@ WORKDIR /opt/ml_in_app
 RUN conda env create -n heroku-model-deploy -f ./environment.yml && \
     rm ./environment.yml
 
+RUN conda init bash
+
