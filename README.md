@@ -624,8 +624,8 @@ remote by executing the following command but replacing "heroku-model-deploy"
 with the name of the app you just created:
 
 ```bash
-heroku-model-deploy master > heroku git:remote -a heroku-model-deploy
-set git remote heroku to https://git.heroku.com/heroku-model-deploy.git
+heroku-model-deploy master > heroku git:remote -a batch3-capstone-demo
+set git remote heroku to https://git.heroku.com/batch3-capstone-demo.git
 ```
 
 At this point, we'll need to do something a bit extra in order to be able to use
@@ -643,6 +643,7 @@ change your pipeline and retrain a different model you need to commit the change
 pushing to heroku).
 
 ```bash
+~ > git push heroku master
 Enumerating objects: 5, done.
 Counting objects: 100% (5/5), done.
 Delta compression using up to 4 threads
@@ -681,7 +682,7 @@ To https://git.heroku.com/batch3-capstone-demo.git
  rather than `http://localhost` like we saw earlier. For my app it looks like the following:
 
  ```
- ~ > curl -X POST https://heroku-model-deploy.herokuapp.com/predict -d '{"id": 0, "observation": {"Age": 22.0, "Cabin": null, "Embarked": "S", "Fare": 7.25, "Parch": 0, "Pclass": 3, "Sex": "male", "SibSp": 1}}' -H "Content-Type:application/json"
+ ~ > curl -X POST https://batch3-capstone-demo.herokuapp.com/predict -d '{"id": 0, "observation": {"Age": 22.0, "Cabin": null, "Embarked": "S", "Fare": 7.25, "Parch": 0, "Pclass": 3, "Sex": "male", "SibSp": 1}}' -H "Content-Type:application/json"
 {
   "proba": 0.09264179297127445
 }
@@ -690,7 +691,7 @@ To https://git.heroku.com/batch3-capstone-demo.git
  And we can recieve updates like the following:
 
  ```bash
-~ > curl -X POST https://heroku-model-deploy.herokuapp.com/update -d '{"id": 0, "true_class": 1}' -H "Content-Type:application/json"
+~ > curl -X POST https://batch3-capstone-demo.herokuapp.com/update -d '{"id": 0, "true_class": 1}' -H "Content-Type:application/json"
 {
   "id": 1,
   "observation": "{\"id\": 0, \"observation\": {\"Age\": 22.0, \"Cabin\": null, \"Embarked\": \"S\", \"Fare\": 7.25, \"Parch\": 0, \"Pclass\": 3, \"Sex\": \"male\", \"SibSp\": 1}}",
@@ -704,13 +705,13 @@ You can see the logs (which is helpful for debugging) with the `heroku logs` com
 Here are the logs for the two calls we just made:
 
 ```
-heroku-model-deploy master > heroku logs -n 5
+batch3-capstone-demo master > heroku logs -n 5
 2017-12-27T20:14:59.351793+00:00 app[web.1]: [2017-12-27 20:14:59 +0000] [4] [INFO] Using worker: sync
 2017-12-27T20:14:59.359149+00:00 app[web.1]: [2017-12-27 20:14:59 +0000] [8] [INFO] Booting worker with pid: 8
 2017-12-27T20:14:59.371891+00:00 app[web.1]: [2017-12-27 20:14:59 +0000] [9] [INFO] Booting worker with pid: 9
 2017-12-27T20:15:00.678404+00:00 heroku[web.1]: State changed from starting to up
-2017-12-27T20:19:25.944435+00:00 heroku[router]: at=info method=POST path="/predict" host=heroku-model-deploy.herokuapp.com request_id=79138602-5b95-497a-9b69-c2528a2bbfc9 fwd="86.166.46.98" dyno=web.1 connect=0ms service=496ms status=200 bytes=187 protocol=https
-2017-12-27T20:20:46.033529+00:00 heroku[router]: at=info method=POST path="/update" host=heroku-model-deploy.herokuapp.com request_id=cc92e857-895d-425b-ab00-a92862e1253e fwd="86.166.46.98" dyno=web.1 connect=1ms service=9ms status=200 bytes=417 protocol=https
+2017-12-27T20:19:25.944435+00:00 heroku[router]: at=info method=POST path="/predict" host=batch3-capstone-demo.herokuapp.com request_id=79138602-5b95-497a-9b69-c2528a2bbfc9 fwd="86.166.46.98" dyno=web.1 connect=0ms service=496ms status=200 bytes=187 protocol=https
+2017-12-27T20:20:46.033529+00:00 heroku[router]: at=info method=POST path="/update" host=batch3-capstone-demo.herokuapp.com request_id=cc92e857-895d-425b-ab00-a92862e1253e fwd="86.166.46.98" dyno=web.1 connect=1ms service=9ms status=200 bytes=417 protocol=https
 ```
 
 ### Last few notes
