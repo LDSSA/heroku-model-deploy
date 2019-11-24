@@ -593,14 +593,16 @@ Once this is done, you will want to download and install the
 
 After the heroku cli is installed, you'll need to open a command prompt and
 log in. You will use the same credentials that you use to log in through the
-web interface with and it should look something like this:
+web interface with and it should look something like the following, part of
+which is asking you to open up a browser and log in. Should be pretty
+straightforward.
 
 ```bash
 ~ > heroku login
-Enter your Heroku credentials:
-Email: hopkins.sam@puppiesarecute.com
-Password: *************************
-Logged in as hopkins.sam@puppiesarecute.com
+heroku: Press any key to open up the browser to login or q to exit:
+Opening browser to https://cli-auth.heroku.com/auth/browser/.........
+Logging in... done
+Logged in as sam@puppiesarecute.com
 ```
 
 Great! now when you execute commands on your local machine, the heroku cli will know
