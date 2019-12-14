@@ -2,5 +2,4 @@ build:
   docker:
     web: Dockerfile
 run:
-  web: /bin/bash conda activate heroku-model-deploy && /bin/bash gunicorn app:app
-
+  web: /bin/bash -c 'source /usr/local/bin/activate heroku-model-deploy && gunicorn app:app'
