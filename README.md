@@ -67,8 +67,9 @@ flask and be reasonably justified in it.
 
 In order to use flask, you will need to be writing some code in a regular
 python file - no more notebooks here. The first step (assuming you have already
-done `pipenv install -r requirements.txt` is to import it at the top of the file. Let's pretend
-that we are working in a file called `app.py` in our newly created virtual environment.
+created an environment with `environment.yml`) is to import it at the top of the file. 
+Let's pretend that we are working in a file called `app.py` in our newly created 
+conda environment.
 
 ```py
 # the request object does exactly what the name suggests: holds
