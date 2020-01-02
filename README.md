@@ -723,6 +723,23 @@ batch3-capstone-demo master > heroku logs -n 5
 2017-12-27T20:20:46.033529+00:00 heroku[router]: at=info method=POST path="/update" host=batch3-capstone-demo.herokuapp.com request_id=cc92e857-895d-425b-ab00-a92862e1253e fwd="86.166.46.98" dyno=web.1 connect=1ms service=9ms status=200 bytes=417 protocol=https
 ```
 
+### Import problems
+
+If you are using something like a custom transformer, you may need to create a package out of your
+directory as mentioned [here](https://rebeccabilbro.github.io/module-main-has-no-attribute/) and then add something like the following to your `environment.yml` in order to 
+make sure that your code can be imported when unpickling on heroku's infrastructure:
+
+```
+hannels:
+  - conda-forge
+  - defaults
+dependencies:
+  ...
+  - pip
+  - pip:
+    - -e .
+```
+
 ### Last few notes
 
 There were are few additional changes to `app.py` and the rest of the repo that we haven't covered yet so
