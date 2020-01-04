@@ -725,12 +725,65 @@ batch3-capstone-demo master > heroku logs -n 5
 
 ### Import problems
 
-If you are using something like a custom transformer, you may need to create a package out of your
-directory as mentioned [here](https://rebeccabilbro.github.io/module-main-has-no-attribute/) and then add something like the following to your `environment.yml` in order to 
-make sure that your code can be imported when unpickling on heroku's infrastructure:
+If you are using something like a custom transformer, and getting an import error having to do with your custom code
+when unpickling, you'll need to do the following:
+
+#### Put your custom code in a package
+
+Let's say that you have a custom transformer called `MyCustomTransformer` that is part of your
+pickled pipeline. In that case, you'll want to create a [python package](https://www.learnpython.org/en/Modules_and_Packages)
+from which you import in both your traning and deployment code.
+
+In our example, let's create the following package called `custom_transformers` by just creating a directory
+with the same name and putting two files inside of it so that it looks like this:
 
 ```
-hannels:
+└── custom_transformers
+    ├── __init__.py
+    └── transformer.py
+```
+
+And inside of `transformer.py` you can put the code for `MyCustomTransformer`. Then in both your training code as
+well as your `app.py`, you can import them with:
+
+```
+from custom_transformers.transformer import MyCustomTransformer
+```
+
+#### Create a setup.py
+
+Then you will need to put a `setup.py` in the root of the project directory that should look like this:
+
+```
+from setuptools import setup
+from os import path
+
+
+setup(
+    name='my-custom-transformers',
+    version='0.0.1',
+    description='heroku model deploy',
+    url='https://nuna.biz',
+    author='Some data scientist',
+    author_email='nuna@nuna.biz',
+    packages=['custom_transformers'],
+    install_requires=[],
+)
+```
+
+What this does it make your package `pip` installable. You may or may not need to
+install it in your environment by executing `pip install -e .` in your current directory.
+
+#### Include it in your environment.yml
+
+Since we are using anaconda to satisfy dependencies and we have created a package
+that is `pip` installable, we're in a bit of a pickle that requires one little
+hackzinho to make it work. We need to tell anaconda to interpret the current package
+as a pip package rather than an anaconda dependency because anaconda isn't smart
+enough to work with a `setup.py`:
+
+```
+channels:
   - conda-forge
   - defaults
 dependencies:
@@ -739,6 +792,9 @@ dependencies:
   - pip:
     - -e .
 ```
+
+Now when you push to heroku, the environment should be able to find your 
+custom code when unpickling.
 
 ### Last few notes
 
