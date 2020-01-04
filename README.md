@@ -614,7 +614,7 @@ you cloned the repository. It should look something like this:
 
 ```bash
 ~ > cd ldssa/heroku-model-deploy/
-heroku-model-deploy master > ls
+~ > ls
 Deserialize and use.ipynb	README.md			columns.json			requirements.txt
 LICENSE				Train and Serialize.ipynb	dtypes.pickle			titanic.csv
 Procfile			app.py                      pipeline.pickle
