@@ -625,7 +625,7 @@ remote by executing the following command but replacing "heroku-model-deploy"
 with the name of the app you just created:
 
 ```bash
-heroku-model-deploy master > heroku git:remote -a batch3-capstone-demo
+~ > heroku git:remote -a batch3-capstone-demo
 set git remote heroku to https://git.heroku.com/batch3-capstone-demo.git
 ```
 
