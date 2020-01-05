@@ -617,7 +617,7 @@ you cloned the repository. It should look something like this:
 ~ > ls
 Deserialize and use.ipynb	README.md			columns.json			requirements.txt
 LICENSE				Train and Serialize.ipynb	dtypes.pickle			titanic.csv
-Procfile			app.py                      pipeline.pickle
+app.py                      pipeline.pickle
 ```
 
 And make sure that heroku knows about the app you just created by adding a git
@@ -826,19 +826,6 @@ if 'DATABASE_URL' in os.environ:
     )
 else:
     DB = SqliteDatabase('predictions.db')
-```
-
-#### The procfile
-
-The heroku [Procfile](https://devcenter.heroku.com/articles/procfile) is how
-we tell heroku to use the code we have deployed to it. The contents of ours
-is very simple and tells [gunicorn](http://gunicorn.org/) that there's an `app.py`
-file and inside of that file, theres an object called `app` that contains a
-[wsgi](https://en.wikipedia.org/wiki/Web_Server_Gateway_Interface) server that it
-can use to listen for incoming connections:
-
-```
-web: gunicorn app:app
 ```
 
 ### Heroku useful snippets
