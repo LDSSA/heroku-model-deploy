@@ -632,7 +632,7 @@ set git remote heroku to https://git.heroku.com/batch3-capstone-demo.git
 At this point, we'll need to do something a bit extra in order to be able to use
 our conda environment by specifying and configuring a heroku buildpack:
 
-```
+```sh
 ~ > heroku stack:set container
 Stack set. Next release on ⬢ batch3-capstone-demo will use container.
 Run git push heroku master to create a new release on ⬢ batch3-capstone-demo.
@@ -682,7 +682,7 @@ To https://git.heroku.com/batch3-capstone-demo.git
  some of the curl commands that we saw before but using `https://<your-app-name>.herokuapp.com`
  rather than `http://localhost` like we saw earlier. For my app it looks like the following:
 
- ```
+ ```bash
  ~ > curl -X POST https://batch3-capstone-demo.herokuapp.com/predict -d '{"id": 0, "observation": {"Age": 22.0, "Cabin": null, "Embarked": "S", "Fare": 7.25, "Parch": 0, "Pclass": 3, "Sex": "male", "SibSp": 1}}' -H "Content-Type:application/json"
 {
   "proba": 0.09264179297127445
@@ -713,7 +713,7 @@ else that would break the boilerplate assumptions that we've made here.
 You can see the logs (which is helpful for debugging) with the `heroku logs` command.
 Here are the logs for the two calls we just made:
 
-```
+```bash
 ~ > heroku logs -n 5
 2017-12-27T20:14:59.351793+00:00 app[web.1]: [2017-12-27 20:14:59 +0000] [4] [INFO] Using worker: sync
 2017-12-27T20:14:59.359149+00:00 app[web.1]: [2017-12-27 20:14:59 +0000] [8] [INFO] Booting worker with pid: 8
@@ -737,7 +737,7 @@ from which you import in both your traning and deployment code.
 In our example, let's create the following package called `custom_transformers` by just creating a directory
 with the same name and putting two files inside of it so that it looks like this:
 
-```
+```bash
 └── custom_transformers
     ├── __init__.py
     └── transformer.py
@@ -746,7 +746,7 @@ with the same name and putting two files inside of it so that it looks like this
 And inside of `transformer.py` you can put the code for `MyCustomTransformer`. Then in both your training code as
 well as your `app.py`, you can import them with:
 
-```
+```py
 from custom_transformers.transformer import MyCustomTransformer
 ```
 
@@ -754,7 +754,7 @@ from custom_transformers.transformer import MyCustomTransformer
 
 Then you will need to put a `setup.py` in the root of the project directory that should look like this:
 
-```
+```py
 from setuptools import setup
 from os import path
 
@@ -782,7 +782,7 @@ hackzinho to make it work. We need to tell anaconda to interpret the current pac
 as a pip package rather than an anaconda dependency because anaconda isn't smart
 enough to work with a `setup.py`:
 
-```
+```yml
 channels:
   - conda-forge
   - defaults
