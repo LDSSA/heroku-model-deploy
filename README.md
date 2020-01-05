@@ -714,7 +714,7 @@ You can see the logs (which is helpful for debugging) with the `heroku logs` com
 Here are the logs for the two calls we just made:
 
 ```
-batch3-capstone-demo master > heroku logs -n 5
+~ > heroku logs -n 5
 2017-12-27T20:14:59.351793+00:00 app[web.1]: [2017-12-27 20:14:59 +0000] [4] [INFO] Using worker: sync
 2017-12-27T20:14:59.359149+00:00 app[web.1]: [2017-12-27 20:14:59 +0000] [8] [INFO] Booting worker with pid: 8
 2017-12-27T20:14:59.371891+00:00 app[web.1]: [2017-12-27 20:14:59 +0000] [9] [INFO] Booting worker with pid: 9
