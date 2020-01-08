@@ -278,7 +278,7 @@ take care of this in a few lines of code:
 ```py
 from peewee import (
     SqliteDatabase, PostgresqlDatabase, Model, IntegerField,
-    FloatField, BooleanField, TextField,
+    FloatField, BooleanField, TextField, IntegrityError 
 )
 
 DB = SqliteDatabase('predictions.db')
