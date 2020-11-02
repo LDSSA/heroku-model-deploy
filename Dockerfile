@@ -1,12 +1,8 @@
-FROM conda/miniconda3
-
-ENTRYPOINT []
-
-SHELL ["/bin/bash", "-c"]
+FROM python:3.8-buster
 
 ADD . /opt/ml_in_app
 WORKDIR /opt/ml_in_app
 
 # install packages by conda
-RUN conda env create -n heroku-model-deploy -f ./environment.yml && \
-    rm ./environment.yml
+RUN pip install -r requirements.txt
+CMD ["python", "app.py"]

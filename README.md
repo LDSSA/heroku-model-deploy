@@ -6,11 +6,11 @@ You can deploy your own model by
 
 1. Copying the contents of this repo to a new directory
 1. Replace `pipeline.pickle`, `dtypes.pickle`, and `columns.json` with
-   your own.
+   your own
 1. [Deploy to heroku](https://github.com/LDSSA/heroku-model-deploy#deploy-to-heroku)
 
 You'll probably run into a few issues along the way which is why you'll at least want to
-skim the contents of the notebooks and this README so you can at least have an idea of
+skim the contents of the notebooks and this README, in order to have an idea of
 where to look when you hit a bump in the road.
 
 ## Intro
@@ -18,20 +18,20 @@ where to look when you hit a bump in the road.
 This is a very simplistic yet effective way to deploy a scikit binary
 classifier behind a HTTP server on heroku.
 
-There are 4 main topics to cover here
+There are 4 main topics to cover here:
 
 1. Serialization
     - This is covered in notebooks
 1. Flask
-    - Covered here in the readme
+    - Covered here in the README
 1. Database connection
-    - Covered here in the readme
+    - Covered here in the README
 1. Deployment to heroku
-    - Also covered here in the readme
+    - Also covered here in the README
 
 ## Before continuing
 
-Topic #1 is the only one that is not covered here in this readme. It is covered in two notebooks
+Topic #1 is the only one that is not covered here in this README. It is covered in two notebooks
 that you must read before moving on with the rest of this README.
 
 [Notebook #1](https://github.com/LDSSA/heroku-example/blob/master/Train%20and%20Serialize.ipynb) has
@@ -42,14 +42,10 @@ that arrives for prediction.
 to do with deserialization so that you can re-use a model on new observations without having to re-train
 it.
 
-## Conda environments
-
-We use conda in the exact same way as in the [batch3-students repo](https://github.com/LDSSA/batch3-students).
-
 ## Flask
 
-Have you already read and understood the notebooks on serialiation? Have you already tested your understanding
-by pickling and un-pickling your scikit model? Yes yes? Alrighty then, you may continue on.
+Have you already read and understood the notebooks on serialization? Have you already tested your understanding
+by pickling and un-pickling your scikit model? Yes yes? Alrighty then, you may continue.
 
 ### What is flask
 
@@ -58,7 +54,7 @@ for quick and simple HTTP server development and is a great alternative to bigge
 However, be wary before moving forward with a big project using flask - it can get out of hand very quickly
 without the enforced structure that other heavier frameworks like Django provide.
 
-For us, since we only need a total of two endpoints and it doesn't even need to be RESTful, we can stick with
+For us, since we only need a total of two endpoints and it doesn't even need to be [RESTful](https://en.wikipedia.org/wiki/Representational_state_transfer), we can stick with
 flask and be reasonably justified in it.
 
 ### First steps
@@ -66,16 +62,18 @@ flask and be reasonably justified in it.
 #### Get a project started
 
 In order to use flask, you will need to be writing some code in a regular
-python file - no more notebooks here. The first step (assuming you have already
-created an environment with `environment.yml`) is to import it at the top of the file. 
+python file - no more notebooks here.
+
+The first step (assuming you have already
+created an virtual environment and installed the requirements in `requirements.txt`), is to import flask at the top of the file. 
 Let's pretend that we are working in a file called `app.py` in our newly created 
-conda environment.
+virtual environment.
 
 ```py
-# the request object does exactly what the name suggests: holds
-# all of the contents of an HTTP request that someone is making
 # the Flask object is for creating an HTTP server - you'll
 # see this a few lines down.
+# the request object does exactly what the name suggests: holds
+# all of the contents of an HTTP request that someone is making
 # the jsonify function is useful for when we want to return
 # json from the function we are using.
 from flask import Flask, request, jsonify
@@ -86,11 +84,11 @@ app = Flask(__name__)
 ```
 
 This server doesn't do anything yet. In order to make it do stuff we will
-need to add http endpoints to it.
+need to add HTTP endpoints to it.
 
 ### Making HTTP endpoints
 
-With flask, creating an http endpoint is incredibly simple assuming that we already
+With flask, creating an HTTP endpoint is incredibly simple, assuming that we already
 have the `app` object created from the `Flask` constructor. Let's make a single
 endpoint that will serve the predictions:
 
@@ -105,12 +103,12 @@ def predict():
 
 The above route that we have isn't very smart in that it returns the same
 prediction every time (0.5) and it doesn't actually care about the input
-that you sent it, we've almost created an entire server that serves a prediction!
+that you sent it. But hey, with just a few lines of code we've almost created an entire server that serves a prediction!
 
 ### Making a complete server
 
-So putting it all together with a few lines of code at the end to start
-the server in development mode, we've created an entire server that 
+Putting it all together with a few lines of code at the end (in order to start
+the server in development mode), we've created an entire server that 
 can be run by executing `python app.py`:
 
 ```py
@@ -134,7 +132,7 @@ if __name__ == "__main__":
 
 ```
 
-So if you are running this server and you execute the following, you'll get a prediction:
+If you are running this server and you execute the following, you'll get a prediction:
 
 ```bash
 ~ > curl -X POST http://localhost:5000/predict
@@ -146,7 +144,7 @@ So if you are running this server and you execute the following, you'll get a pr
 Alright, now that we can run a full flask server, let's try to make something a bit more
 useful by receiving new data.
 
-## Receiving a new observation
+### Receiving a new observation
 
 So now that we've got a way to build an entire server, let's try to actually use the
 server to receive new information. There's a pretty nice way to do this via the
@@ -191,17 +189,17 @@ You can see the output with the following examples:
 Take a quick note that we had to supply a header of `Content-Type:application/json`
 and json data of `{"unemployed": false}`.
 
-## Integrating with a scikit model
+### Integrating with a scikit model
 
 Now that we know how to get a python dictionary via the flask `get_json`
 function, we're at a point in which we can pick up where the last tutorial
-notebook left off! Let's tie it all together by
+notebook left off! Let's tie it all together by:
 
 1. Deserializing the model, columns, and dtypes
 1. Turn the new observation into a pandas dataframe
-1. Call predict_proba to get liklihood of survival of new observation
+1. Call `predict_proba` to get the likelihood of survival of the new observation
 
-### Deserialize model, prep observation, predict
+#### Deserialize model, prep observation, predict
 
 ```py
 import json
@@ -237,7 +235,7 @@ if __name__ == "__main__":
 ```
 
 Check out how we have now taken the payload and turned it into
-a new observation that is a single entry in a dataframe
+a new observation that is a single entry in a dataframe,
 and can be consumed by the pipeline to be turned into a prediction
 of survival. You can see the output with the following:
 
@@ -250,15 +248,14 @@ of survival. You can see the output with the following:
 
 ## Keeping track of your predictions
 
-Okay now that you can get data, produce predictions, and return those predictions,
-you will need to keep track of what you've been saying about who. Said another way:
-you can't just provide predictions and then just forget about it all. You need to
-take record of what you have predicted about who so that you can revisit later on
-to do some additional analysis on your "through the door" population.
+Okay, now that you can get data, produce predictions, and return those predictions,
+you will need to keep track of what you've been saying about who.
+Said another way: you can't just provide predictions and then just forget about it all. You need to
+take record of what you have predicted about who, so that later on you can do some additional analysis on your "through the door" population.
 
 In order to do this, we will need to start working with a database. The database
 will keep track of the observations, the predictions we have provided for them
-as well as the true outcomes should we be luckly enough to find out.
+as well as the true outcomes (should we be luckly enough to find out about them).
 
 ### ORMs and peewee
 
@@ -267,7 +264,7 @@ called an [ORM](https://en.wikipedia.org/wiki/Object-relational_mapping). For th
 exercise we will use a very simplistic ORM called [peewee](http://docs.peewee-orm.com/en/latest/index.html).
 This will allow us to use a local database called [sqlite](https://en.wikipedia.org/wiki/SQLite) (which is basically a file)
 when we are developing on our laptops and use a more production-ready database called
-[postgresql](https://en.wikipedia.org/wiki/PostgreSQL) when deploying to heroku with very
+[postgresql](https://en.wikipedia.org/wiki/PostgreSQL) when deploying to heroku, with very
 little change to our code.
 
 One cool thing that ORMs allow us to do is define the data model that we want
@@ -296,7 +293,7 @@ DB.create_tables([Prediction], safe=True)
 ```
 
 Now we need to take a moment to understand exactly how much these
-few lines of code have done for us because it it A LOT.
+few lines of code have done for us because it is A LOT.
 
 #### Connect to database
 
@@ -319,29 +316,26 @@ the following:
       the responsibility of the person providing the observation to give
       this id.
 - `observation`
-    - We should record the observation itself when it comes in in case
+    - We should record the observation itself when it comes, in case
       we want to retrain our model later on.
 - `proba`
-    - The probability of survival that we assigned
+    - The probability of survival that we assigned to the observation.
 - `true_class`
-    - This is for later on in the case where we actually find out what
-       actually happened to the observation in which we supplied the
-       prediction for.
+    - This is for later on, in case we find out what actually happened to the observation for which we supplied a prediction.
 
 #### Create the table
 
 `DB.create_tables([Prediction], safe=True)`
 
 The model that we specified must correspond to a database table.
-Creation of these tables is something that is it's own non trivial
-headache and this one line of code makes it so that we don't have
-to worry about any of it.
+Creation of these tables is something that is it's own non-trivial
+headache, and this one line of code makes it so that we don't have to worry about any of it.
+
+---- HERE -----
 
 ## Integrate data model with webserver
 
-Now that we have a webserver and a data model that we are happy
-with, the next question is how do we put them together? It's
-actually pretty straightforward!
+Now that we have a webserver and a data model that we are happy with, the next question is how do we put them together? It's actually pretty straightforward!
 
 ```py
 import json
