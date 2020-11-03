@@ -571,15 +571,31 @@ To add the database, navigate to `Resources` and search for `postgres`, then sel
 
 ![add postgres](https://i.imgur.com/rZvNnuB.png)
 
---- HERE ---
 
-### Now let's deploy the titanic model
+### Let's deploy the titanic model
 
 Let's deploy the server that's contained in this repository. The code is in `app.py` and
 there's a few other files that are required but we'll go over those a bit later.
 
 First step toward deployment is to make sure that this repo is cloned on your local
 machine.
+Since you'll need to change the contents of this repo, and you shouldn't be sharing code with your coleagues, you need to have a private copy of it. For that, go throught the following steps:
+
+- Create a new repository on GitHub. Make it private. You **don't** need to initialize it with any files (as we'll be copying all the files from this repo).
+- Create a bare clone of this repo by running the following command:
+```bash
+~ > git clone --bare git@github.com:LDSSA/heroku-model-deploy.git
+```
+- Push the contents of this repo to your copy (replace the repo URL with the right one):
+ ```bash
+~ > cd heroku-model-deploy.git
+~ > git push --mirror git@github.com:youruser/new-repo.git
+```
+- Remove the bare clone of this repository, that you created earlier:
+ ```bash
+~ > cd ..
+~ > rm -rf heroku-model-deploy.git
+```
 
 Once this is done, you will want to download and install the
 [heroku cli](https://devcenter.heroku.com/articles/heroku-cli).
@@ -587,8 +603,7 @@ Once this is done, you will want to download and install the
 After the heroku cli is installed, you'll need to open a command prompt and
 log in. You will use the same credentials that you use to log in through the
 web interface with, and it should look something like the following (part of
-which is asking you to open up a browser and log in). Should be pretty
-straightforward.
+which is asking you to open up a browser and log in):
 
 ```bash
 ~ > heroku login
@@ -601,15 +616,14 @@ Logged in as sam@puppiesarecute.com
 Great! Now when you execute commands on your local machine, the heroku cli will know
 who you are!
 
-Next, you will want to navigate on the command line to the location of the folder in which
-you cloned the repository. It should look something like this:
+Next, you will want to navigate on the command line to the repo you've just created (which is the copy of the heroku-mode-deployment repo). It should look something like this:
 
 ```bash
-~ > cd ldssa/heroku-model-deploy/
+~ > cd ldssa/heroku-model-deploy-copy/
 ~ > ls
-Deserialize and use.ipynb	README.md			columns.json			requirements.txt
-LICENSE				Train and Serialize.ipynb	dtypes.pickle			titanic.csv
-app.py                      pipeline.pickle
+Dockerfile                         Step 1 - Train and Serialize.ipynb columns.json                       pipeline.pickle
+LICENSE                            Step 2 - Deserialize and use.ipynb dtypes.pickle                      requirements.txt
+README.md                          app.py                             heroku.yml                         titanic.csv
 ```
 
 Make sure that heroku knows about the app you just created by adding a git
@@ -621,8 +635,7 @@ with the name of the app you just created:
 set git remote heroku to https://git.heroku.com/heroku-model-deploy.git
 ```
 
-At this point, we'll need to do something a bit extra in order to be able to use
-our virtual environment, by specifying and configuring a heroku buildpack:
+At this point, we'll need to do something a bit extra, in order to sort out our python dependencies in heroku, by specifying and configuring a heroku buildpack:
 
 ```sh
 ~ > heroku stack:set container
@@ -630,71 +643,66 @@ Stack set. Next release on ⬢ heroku-model-deploy will use container.
 Run git push heroku master to create a new release on ⬢ heroku-model-deploy.
 ```
 
-Now we can push to heroku and our app will be deployed **IN THE CLOUD, WAAAT?!?!** It is important to remember, only
+Now we can push to heroku and our app will be deployed **IN THE CLOUD, WAAAT?!?!**
+It is important to remember that only
 the changes that you have commited (with git add & git commit) will be deployed. So if you
-change your pipeline and retrain a different model you need to commit the changes before
-pushing to heroku).
+change your pipeline and retrain a different model you'll need to commit the changes before
+pushing to heroku.
 
 ```bash
 ~ > git push heroku master
-Enumerating objects: 5, done.
-Counting objects: 100% (5/5), done.
-Delta compression using up to 4 threads
+Counting objects: 3, done.
+Delta compression using up to 4 threads.
 Compressing objects: 100% (3/3), done.
-Writing objects: 100% (3/3), 302 bytes | 302.00 KiB/s, done.
+Writing objects: 100% (3/3), 359 bytes | 359.00 KiB/s, done.
 Total 3 (delta 2), reused 0 (delta 0)
 remote: Compressing source files... done.
 remote: Building source:
 remote: === Fetching app code
 remote:
 remote: === Building web (Dockerfile)
-remote: Sending build context to Docker daemon  543.7kB
-remote: Step 1/6 : FROM continuumio/miniconda3
-remote: latest: Pulling from continuumio/miniconda3
-remote: b8f262c62ec6: Pulling fs layer
-remote: 0a43c0154f16: Pulling fs layer
-remote: 906d7b5da8fb: Pulling fs layer
-remote: 906d7b5da8fb: Verifying Checksum
-remote: 906d7b5da8fb: Download complete
-remote: b8f262c62ec6: Verifying Checksum
-remote: b8f262c62ec6: Download complete
-remote: 0a43c0154f16: Verifying Checksum
-remote: 0a43c0154f16: Download complete
+remote: Sending build context to Docker daemon  562.2kB
+remote: Step 1/5 : FROM python:3.8-buster
+remote: 3.8-buster: Pulling from library/python
+remote: e4c3d3e4f7b0: Pulling fs layer
+remote: 101c41d0463b: Pulling fs layer
+remote: 8275efcd805f: Pulling fs layer
 
 ...
 
-remote: 61c68312a080: Pushed
-remote: latest: digest: sha256:b094fd516873cea432cd199f4371d3e190bb06bbbcb436ba882d3eacc591e327 size: 1375
+remote: f327bba4a101: Pushed
+remote: 3361b17285b1: Pushed
+remote: latest: digest: sha256:8578ff2473fbbafc1bfd14c623102d3a9cb9be0995362f6b054ca4f2f317f39e size: 2639
 remote:
 remote: Verifying deploy... done.
-To https://git.heroku.com/batch3-capstone-demo.git
-   8eb8b66..05ae35d  master -> master
+To https://git.heroku.com/heroku-model-deploy.git
+   12b761e..0ad47bf  master -> master
 ```
  And boom! We're done and deployed! You can actually see this working by executing
  some of the curl commands that we saw before but using `https://<your-app-name>.herokuapp.com`
  rather than `http://localhost` like we saw earlier. For my app it looks like the following:
 
  ```bash
- ~ > curl -X POST https://batch3-capstone-demo.herokuapp.com/predict -d '{"id": 0, "observation": {"Age": 22.0, "Cabin": null, "Embarked": "S", "Fare": 7.25, "Parch": 0, "Pclass": 3, "Sex": "male", "SibSp": 1}}' -H "Content-Type:application/json"
+ ~ > curl -X POST https://heroku-model-deploy.herokuapp.com/predict -d '{"id": 0, "observation": {"Age": 22.0, "Cabin": null, "Embarked": "S", "Fare": 7.25, "Parch": 0, "Pclass": 3, "Sex": "male", "SibSp": 1}}' -H "Content-Type:application/json"
 {
-  "proba": 0.09264179297127445
+  "proba": 0.16097398111735517
 }
  ```
 
- And we can recieve updates like the following:
+ And we can receive updates like the following:
 
  ```bash
-~ > curl -X POST https://batch3-capstone-demo.herokuapp.com/update -d '{"id": 0, "true_class": 1}' -H "Content-Type:application/json"
+~ > curl -X POST https://heroku-model-deploy.herokuapp.com/update -d '{"id": 0, "true_class": 1}' -H "Content-Type:application/json"
 {
   "id": 1,
   "observation": "{\"id\": 0, \"observation\": {\"Age\": 22.0, \"Cabin\": null, \"Embarked\": \"S\", \"Fare\": 7.25, \"Parch\": 0, \"Pclass\": 3, \"Sex\": \"male\", \"SibSp\": 1}}",
   "observation_id": 0,
-  "proba": 0.0926418,
+  "proba": 0.16097398,
   "true_class": 1
 }
 ```
 
-How does all of this work you ask? Well it has to do with the fact
+How does all of this work you ask? Well, it has to do with the fact
 that there exists a `Dockerfile` and `heroku.yml` files in this repo.
 Just be sure that both of these are in your repo and that they are
 committed before you `heroku push` and everything should work. If you
@@ -711,9 +719,11 @@ Here are the logs for the two calls we just made:
 2017-12-27T20:14:59.359149+00:00 app[web.1]: [2017-12-27 20:14:59 +0000] [8] [INFO] Booting worker with pid: 8
 2017-12-27T20:14:59.371891+00:00 app[web.1]: [2017-12-27 20:14:59 +0000] [9] [INFO] Booting worker with pid: 9
 2017-12-27T20:15:00.678404+00:00 heroku[web.1]: State changed from starting to up
-2017-12-27T20:19:25.944435+00:00 heroku[router]: at=info method=POST path="/predict" host=batch3-capstone-demo.herokuapp.com request_id=79138602-5b95-497a-9b69-c2528a2bbfc9 fwd="86.166.46.98" dyno=web.1 connect=0ms service=496ms status=200 bytes=187 protocol=https
-2017-12-27T20:20:46.033529+00:00 heroku[router]: at=info method=POST path="/update" host=batch3-capstone-demo.herokuapp.com request_id=cc92e857-895d-425b-ab00-a92862e1253e fwd="86.166.46.98" dyno=web.1 connect=1ms service=9ms status=200 bytes=417 protocol=https
+2017-12-27T20:19:25.944435+00:00 heroku[router]: at=info method=POST path="/predict" host=heroku-model-deploy.herokuapp.com request_id=79138602-5b95-497a-9b69-c2528a2bbfc9 fwd="86.166.46.98" dyno=web.1 connect=0ms service=496ms status=200 bytes=187 protocol=https
+2017-12-27T20:20:46.033529+00:00 heroku[router]: at=info method=POST path="/update" host=heroku-model-deploy.herokuapp.com request_id=cc92e857-895d-425b-ab00-a92862e1253e fwd="86.166.46.98" dyno=web.1 connect=1ms service=9ms status=200 bytes=417 protocol=https
 ```
+
+--- HERE ---
 
 ### Import problems
 
