@@ -202,6 +202,7 @@ notebook left off! Let's tie it all together by:
 #### Deserialize model, prep observation, predict
 
 ```py
+import joblib
 import json
 import pickle
 import pandas as pd
@@ -213,11 +214,10 @@ app = Flask(__name__)
 with open('columns.json') as fh:
     columns = json.load(fh)
 
-with open('pipeline.pickle', 'rb') as fh:
-    pipeline = pickle.load(fh)
-
 with open('dtypes.pickle', 'rb') as fh:
     dtypes = pickle.load(fh)
+
+pipeline = joblib.load('pipeline.pickle')
 
 
 @app.route('/predict', methods=['POST'])
@@ -242,7 +242,7 @@ of survival. You can see the output with the following:
 ```
 ~ >  curl -X POST http://localhost:5000/predict -d '{"Age": 22.0, "Cabin": null, "Embarked": "S", "Fare": 7.25, "Parch": 0, "Pclass": 3, "Sex": "male", "SibSp": 1}' -H "Content-Type:application/json"
 {
-  "prediction": 0.09264179297127445
+  "prediction": 0.16097398111735517
 }
 ```
 
@@ -254,8 +254,8 @@ Said another way: you can't just provide predictions and then just forget about 
 take record of what you have predicted about who, so that later on you can do some additional analysis on your "through the door" population.
 
 In order to do this, we will need to start working with a database. The database
-will keep track of the observations, the predictions we have provided for them
-as well as the true outcomes (should we be luckly enough to find out about them).
+will keep track of the observations, the predictions we have provided for them,
+and the true outcomes (should we be luckly enough to find out about them).
 
 ### ORMs and peewee
 
@@ -263,7 +263,7 @@ When working with databases in code, you generally want to be using a layer of a
 called an [ORM](https://en.wikipedia.org/wiki/Object-relational_mapping). For this
 exercise we will use a very simplistic ORM called [peewee](http://docs.peewee-orm.com/en/latest/index.html).
 This will allow us to use a local database called [sqlite](https://en.wikipedia.org/wiki/SQLite) (which is basically a file)
-when we are developing on our laptops and use a more production-ready database called
+when we are developing on our laptops, and use a more production-ready database called
 [postgresql](https://en.wikipedia.org/wiki/PostgreSQL) when deploying to heroku, with very
 little change to our code.
 
@@ -274,8 +274,8 @@ take care of this in a few lines of code:
 
 ```py
 from peewee import (
-    SqliteDatabase, PostgresqlDatabase, Model, IntegerField,
-    FloatField, BooleanField, TextField,
+    SqliteDatabase, Model, IntegerField,
+    FloatField, TextField,
 )
 
 DB = SqliteDatabase('predictions.db')
@@ -301,8 +301,7 @@ few lines of code have done for us because it is A LOT.
 
 Create a sqlite databse that will be stored in a file called `predictions.db`.
 This may seem trivial right now, but soon enough you will see that changing
-out this line of code for one other will result in a lot of value for
-the effort.
+out this line of code for one other will result in a lot of value for the effort.
 
 #### Define the data model
 
@@ -331,13 +330,12 @@ The model that we specified must correspond to a database table.
 Creation of these tables is something that is it's own non-trivial
 headache, and this one line of code makes it so that we don't have to worry about any of it.
 
----- HERE -----
-
 ## Integrate data model with webserver
 
 Now that we have a webserver and a data model that we are happy with, the next question is how do we put them together? It's actually pretty straightforward!
 
 ```py
+import joblib
 import json
 import pickle
 import pandas as pd
@@ -378,12 +376,11 @@ with open('columns.json') as fh:
     columns = json.load(fh)
 
 
-with open('pipeline.pickle', 'rb') as fh:
-    pipeline = pickle.load(fh)
-
-
 with open('dtypes.pickle', 'rb') as fh:
     dtypes = pickle.load(fh)
+
+
+pipeline = joblib.load('pipeline.pickle')
 
 
 # End model un-pickling
@@ -444,46 +441,45 @@ One piece of the code above that might not be clear at first is:
         DB.rollback()
 ```
 
-What is this code doing?. When we receive a new prediction request, we want to store such request
+What is this code doing? When we receive a new prediction request, we want to store such request
 in our database (to keep track of our model performance). With peewee, we save a new Prediction (basically
 a new row in our table) with the `save()` method, which is very neat and convenient.
 
-However, because our table has a unique constraint (no two rows can have the same `observation_id` is a unique field),
+However, because our table has a unique constraint (no two rows can have the same `observation_id`, which is a unique field),
 if we perform the same prediction request twice (with the same id) the system will crash because pewee can't save
-again an already saved observation_id, and it will throw an `IntegrityError` (as in, we would be asking pewee to violate
-the integrity of the table unique id requirement if we saved a duplicated id, right?).
+again an already saved observation_id; it will throw an `IntegrityError` (as in, we would be asking pewee to violate
+the integrity of the table's unique id requirement if we saved a duplicated id, right?).
 
-To avoid that we do a simple try/Except block, we make sure we are only catching the integrity error, then, for those cases
-where we try a request with the same observation_id, we print a nice error message an we do a database rollback (to close the current save transaction that has failed).
+To avoid that, we do a simple try/except block: if we try a request with the same observation_id, peewee will raise the integrity error and we'll catch it, print a nice error message, and do a database rollback (to close the current save transaction that has failed).
 
 Once your app is setup like this, you can test this with the following command:
 
 ```bash
 ~ > curl -X POST http://localhost:5000/predict -d '{"id": 0, "observation": {"Age": 22.0, "Cabin": null, "Embarked": "S", "Fare": 7.25, "Parch": 0, "Pclass": 3, "Sex": "male", "SibSp": 1}}' -H "Content-Type:application/json"
 {
-  "proba": 0.09264179297127445
+  "proba": 0.16097398111735517
 }
 ```
 
-Now let's take note of the few things that changed
+Now let's take note of the few things that changed:
 
-1. The structure of the json input changed. It now includes to top level entries:
-    - `id` - This is the unique identifier of the observation
+1. The structure of the json input changed. It now includes two top level entries:
+    - `id` - This is the unique identifier of the observation;
     - `observation` - This is the actual observation contents that will be sent through
       the pipeline we have un-pickled.
-1. We create an instance of `Prediction` with the 3 fields that we care about
-1. We call `save()` on the prediction to save it to the database
+1. We create an instance of `Prediction` with the 3 fields that we care about.
+1. We call `save()` on the prediction to save it to the database.
 1. We return `proba` so that the caller of the HTTP endpoint knows what you are
 saying about the observation.
 
 ## Receiving updates
 
-Now that we have a way to provide prediction AND keep track of them, we should
+Now that we have a way to provide predictions AND keep track of them, we should
 take it to the next level and provide ourselves with a way to receive updates
 on observations that we have judged with our predictive model.
 
 We can do this with one extra endpoint that is very straightforward and only
-introduced one new concept of database querying through the ORM.
+introduces one new concept: database querying through the ORM.
 
 ```py
 @app.route('/update', methods=['POST'])
@@ -500,20 +496,20 @@ def update():
 ```
 
 Assuming that we have already processed an observation with id=0, we
-can now recieve and record the true outcome. Imagine that it is discovered
+can now receive and record the true outcome. Imagine that it is discovered
 later on that the person with id=0 didn't survive the titanic disaster. They
 would probably enter something into a content management system that
-would then trigger a call to your server that would end up looking like
+would then trigger a call to your server which would end up looking like
 the following:
 
 ```bash
-~ > curl -X POST http://localhost:5000/update -d '{"id": 0, "true_class": 1}'  -H "Content-Type:application/json"
+~ > curl -X POST http://localhost:5000/update -d '{"id": 0, "true_class": 0}'  -H "Content-Type:application/json"
 {
   "id": 1,
   "observation": "{\"id\": 0, \"observation\": {\"Age\": 22.0, \"Cabin\": null, \"Embarked\": \"S\", \"Fare\": 7.25, \"Parch\": 0, \"Pclass\": 3, \"Sex\": \"male\", \"SibSp\": 1}}",
   "observation_id": 0,
-  "proba": 0.09264179297127445,
-  "true_class": 1
+  "proba": 0.16097398111735517,
+  "true_class": 0
 }
 ```
 
@@ -521,8 +517,9 @@ Similarly to when we saved the prediction requests, we validate that the observa
 
 Now to wrap it all up, the way that we can interpret this sequence of events is the following:
 
-1. We provided a prediction of 0.092 probability of survival
-1. We found out later that the person didn't survive
+1. We provided a prediction of 0.161 probability of survival;
+1. We found out later that the person didn't survive.
+
 
 ## Deploy to Heroku
 
@@ -530,12 +527,11 @@ It's cool and all that we can run the servers on our own machines. However, it d
 do much good in terms of making the model available to the rest of the world. All this
 `localhost` stuff doesn't help anybody that's not typing on your local machine.
 
-So let's take all of the work we've done getting this running and put it on heroku
-where it can generate real business value. For this part, you can use any server
+So let's take all of the work we've done getting this running and put it on heroku, where it can generate real business value. For this part, you can use any server
 that has a static IP address though since we want to avoid the overhead of administering
-our own server, we will use a servive to do this for us called [heroku](https://www.heroku.com/)
+our own server, we will use a service to do this for us called [heroku](https://www.heroku.com/).
 This is one of the oldest managed platforms out there and is quite robust, well-known, and
-documented. However, be careful before you move forward with a big project o Heroku -
+documented. However, be careful before you move forward with a big project on Heroku -
 it can get CRAZY expensive REALLY fast.
 
 However, for our purposes, they offer a free tier webserver and database that is enough to suit our
@@ -557,7 +553,7 @@ kill anobody to have it in the land of the free but it's kinda far...
 ![select name and region](https://i.imgur.com/oUPNzOk.png)
 
 Once this is done, select "create app" and you'll be sent to a page that's a bit intimidating
-beacuse it just has a lot of stuff. Don't worry though, it's pretty simple what we need
+because it just has a lot of stuff. Don't worry though, it's pretty simple what we need
 to do next.
 
 First up, make sure that you select the Heroku Git deployment method. It should already be selected
@@ -568,14 +564,16 @@ so I don't think you'll need to do anything.
 One last bit is missing here: the database. We are going to use a big boy database
 called postgresql and luckily heroku has a free tier that allows you to store
 up to 10,000 entries which is enough for our purposes (this means that you should try to be conservative
-with how you connect to the app and dont go crazy with it, if the database gets full your app will stop working!, you can check heroku's postgresql guide [here](https://devcenter.heroku.com/articles/heroku-postgresql)).
+with how you connect to the app and dont go crazy with it, if the database gets full your app will stop working!). You can check heroku's postgresql guide [here](https://devcenter.heroku.com/articles/heroku-postgresql).
 
 To add the database, navigate to `Resources` and search for `postgres`, then select `Heroku Postgres` and the
 `Hobby dev - free` tier:
 
 ![add postgres](https://i.imgur.com/rZvNnuB.png)
 
-### Now lets deploy the titanic model
+--- HERE ---
+
+### Now let's deploy the titanic model
 
 Let's deploy the server that's contained in this repository. The code is in `app.py` and
 there's a few other files that are required but we'll go over those a bit later.
@@ -588,8 +586,8 @@ Once this is done, you will want to download and install the
 
 After the heroku cli is installed, you'll need to open a command prompt and
 log in. You will use the same credentials that you use to log in through the
-web interface with and it should look something like the following, part of
-which is asking you to open up a browser and log in. Should be pretty
+web interface with, and it should look something like the following (part of
+which is asking you to open up a browser and log in). Should be pretty
 straightforward.
 
 ```bash
@@ -600,10 +598,10 @@ Logging in... done
 Logged in as sam@puppiesarecute.com
 ```
 
-Great! now when you execute commands on your local machine, the heroku cli will know
+Great! Now when you execute commands on your local machine, the heroku cli will know
 who you are!
 
-Now you will want to navigate on the command line to the location of the folder in which
+Next, you will want to navigate on the command line to the location of the folder in which
 you cloned the repository. It should look something like this:
 
 ```bash
@@ -614,22 +612,22 @@ LICENSE				Train and Serialize.ipynb	dtypes.pickle			titanic.csv
 app.py                      pipeline.pickle
 ```
 
-And make sure that heroku knows about the app you just created by adding a git
-remote by executing the following command but replacing "heroku-model-deploy"
+Make sure that heroku knows about the app you just created by adding a git
+remote. Execute the following command but replacing "heroku-model-deploy"
 with the name of the app you just created:
 
 ```bash
-~ > heroku git:remote -a batch3-capstone-demo
-set git remote heroku to https://git.heroku.com/batch3-capstone-demo.git
+~ > heroku git:remote -a heroku-model-deploy
+set git remote heroku to https://git.heroku.com/heroku-model-deploy.git
 ```
 
 At this point, we'll need to do something a bit extra in order to be able to use
-our conda environment by specifying and configuring a heroku buildpack:
+our virtual environment, by specifying and configuring a heroku buildpack:
 
 ```sh
 ~ > heroku stack:set container
-Stack set. Next release on ⬢ batch3-capstone-demo will use container.
-Run git push heroku master to create a new release on ⬢ batch3-capstone-demo.
+Stack set. Next release on ⬢ heroku-model-deploy will use container.
+Run git push heroku master to create a new release on ⬢ heroku-model-deploy.
 ```
 
 Now we can push to heroku and our app will be deployed **IN THE CLOUD, WAAAT?!?!** It is important to remember, only
