@@ -788,6 +788,14 @@ from playhouse.db_url import connect
 DB = connect(os.environ.get('DATABASE_URL') or 'sqlite:///predictions.db')
 ```
 
+#### Connecting to the Postgres DB
+
+In case you want to connect to the postgres db in heroku, in order to check what is being stored there, you can find out the connection paremeters with this command, as explained [here](https://devcenter.heroku.com/articles/heroku-postgresql#external-connections-ingress):
+
+```bash
+~ > heroku pg:credentials DATABASE
+```
+
 ### Heroku useful snippets
 
 Push new code after committing it:
