@@ -42,6 +42,16 @@ that arrives for prediction.
 to do with deserialization so that you can re-use a model on new observations without having to re-train
 it.
 
+## Python virtual environment
+
+You've probably noticed that we have two requirement files in this repo: `requirements_dev.txt` and `requirements_prod.txt`.
+
+The `requirements_dev.txt` file has the packages that are needed while working on the predictive model, which include jupyter and matplotlib.
+
+The `requirements_prod.txt` file has the packages that are needed when we deploy our model. At that time, we won't need jupyter or matplotlib, so we can save some resources by not installing them.
+
+Now go ahead and create a python virtual env using the requirements in `requirements_dev.txt`, in order to follow this tutorial.
+
 ## Flask
 
 Have you already read and understood the notebooks on serialization? Have you already tested your understanding
@@ -728,13 +738,13 @@ Here are the logs for the two calls we just made:
 ### Import problems
 
 If you are using something like a custom transformer, and getting an import error having to do with your custom code
-when unpickling, you'll need to do the following:
+when unpickling, you'll need to do the following.
 
 #### Put your custom code in a package
 
-Let's say that you have a custom transformer called `MyCustomTransformer` that is part of your
+Let's say that you have a custom transformer, called `MyCustomTransformer`, that is part of your
 pickled pipeline. In that case, you'll want to create a [python package](https://www.learnpython.org/en/Modules_and_Packages)
-from which you import in both your traning and deployment code.
+from which you import the custom transformer, in both your traning and deployment code.
 
 In our example, let's create the following package called `custom_transformers` by just creating a directory
 with the same name and putting two files inside of it so that it looks like this:
@@ -745,106 +755,54 @@ with the same name and putting two files inside of it so that it looks like this
     └── transformer.py
 ```
 
-And inside of `transformer.py` you can put the code for `MyCustomTransformer`. Then in both your training code as
-well as your `app.py`, you can import them with:
+And inside of `transformer.py` you can put the code for `MyCustomTransformer`. Then, in your training code, you can import them with:
 
 ```py
 from custom_transformers.transformer import MyCustomTransformer
 ```
 
-#### Create a setup.py
+When you un-pickle your model, python should be able to find the custom transformer too.
 
-Then you will need to put a `setup.py` in the root of the project directory that should look like this:
+The dependecies from your custom transformer should be added to the two `requirements.txt` files.
 
-```py
-from setuptools import setup
-from os import path
-
-
-setup(
-    name='my-custom-transformers',
-    version='0.0.1',
-    description='heroku model deploy',
-    url='https://nuna.biz',
-    author='Some data scientist',
-    author_email='nuna@nuna.biz',
-    packages=['custom_transformers'],
-    install_requires=[],
-)
-```
-
-What this does it make your package `pip` installable. You may or may not need to
-install it in your environment by executing `pip install -e .` in your current directory.
-
-#### Include it in your environment.yml
-
-Since we are using anaconda to satisfy dependencies and we have created a package
-that is `pip` installable, we're in a bit of a pickle that requires one little
-hackzinho to make it work. We need to tell anaconda to interpret the current package
-as a pip package rather than an anaconda dependency because anaconda isn't smart
-enough to work with a `setup.py`:
-
-```yml
-channels:
-  - conda-forge
-  - defaults
-dependencies:
-  ...
-  - pip
-  - pip:
-    - -e .
-```
-
-Now when you push to heroku, the environment should be able to find your 
-custom code when unpickling.
 
 ### Last few notes
 
-There were are few additional changes to `app.py` and the rest of the repo that we haven't covered yet so
+There were are few additional changes to `app.py` and the rest of the repo that we haven't covered yet, so
 let's get that out of the way. You probably won't need to know much about them but if you are having
 troubleshooting issues, knowing the following may come in handy.
 
 #### The db connector
 
-Instead of having just an sqlite connector, we needed to add another block of code that would
-detect if it is being run on heroku or not and if so, connect to the postgresql database. We know
-that we are on heroku if there is a `DATABASE_URL` environment variable. When we add the postgres database in heroku, heroku will
-automatically add an environment variable (DATABASE_URL) with the conexion we need.
+When our app is running on heroku, we want to connect to a postgres database, rather than to a sqlite one.
+Thus, we had to change the code related to our SqliteDatabase with something that takes care of this:
+
 
 ```py
-if 'DATABASE_URL' in os.environ:
-    db_url = os.environ['DATABASE_URL']
-    dbname = db_url.split('@')[1].split('/')[1]
-    user = db_url.split('@')[0].split(':')[1].lstrip('//')
-    password = db_url.split('@')[0].split(':')[2]
-    host = db_url.split('@')[1].split('/')[0].split(':')[0]
-    port = db_url.split('@')[1].split('/')[0].split(':')[1]
-    DB = PostgresqlDatabase(
-        dbname,
-        user=user,
-        password=password,
-        host=host,
-        port=port,
-    )
-else:
-    DB = SqliteDatabase('predictions.db')
+import os
+from playhouse.db_url import connect
+
+# the connect function checks if there is a DATABASE_URL env var
+# if it exists, it uses it to connect to a remote postgres db
+# otherwise, it connects to a local sqlite db stored in the predictions.db file
+DB = connect(os.environ.get('DATABASE_URL') or 'sqlite:///predictions.db')
 ```
 
 ### Heroku useful snippets
 
-Push new code after committing it
+Push new code after committing it:
 
 ```bash
 git push heroku master && heroku logs --tail
 ```
 
-Restart the server
+Restart the server:
 
 ```bash
 heroku ps:restart && heroku logs --tail
 ```
 
-Check the latest 300 logs of your application
+Check the latest 300 logs of your application:
 
 ```bash
 heroku logs -n 300
