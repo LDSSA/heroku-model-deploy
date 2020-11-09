@@ -64,7 +64,7 @@ for quick and simple HTTP server development and is a great alternative to bigge
 However, be wary before moving forward with a big project using flask - it can get out of hand very quickly
 without the enforced structure that other heavier frameworks like Django provide.
 
-For us, since we only need a total of two endpoints and it doesn't even need to be [RESTful](https://en.wikipedia.org/wiki/Representational_state_transfer), we can stick with
+For us, since we only need a total of two endpoints (an endpoint is the URL that is used to request an action from the server; in our case we will need two types of actions: requesting a prediction for an observation, and updating an observation's true class) and it doesn't even need to be [RESTful](https://en.wikipedia.org/wiki/Representational_state_transfer), we can stick with
 flask and be reasonably justified in it.
 
 ### First steps
