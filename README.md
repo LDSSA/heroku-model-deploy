@@ -606,6 +606,10 @@ Since you'll need to change the contents of this repo, and you shouldn't be shar
 ~ > cd ..
 ~ > rm -rf heroku-model-deploy.git
 ```
+- Clone your copy of this repo:
+ ```bash
+~ > git clone git@github.com:youruser/new-repo.git
+```
 
 Once this is done, you will want to download and install the
 [heroku cli](https://devcenter.heroku.com/articles/heroku-cli).
