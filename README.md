@@ -142,7 +142,7 @@ if __name__ == "__main__":
 
 ```
 
-If you are running this server and you execute the following, you'll get a prediction:
+If you want to experiment with sending requests to your server, open a new terminal window and execute the following command, in order to get a prediction:
 
 ```bash
 ~ > curl -X POST http://localhost:5000/predict
@@ -309,7 +309,7 @@ few lines of code have done for us because it is A LOT.
 
 `DB = SqliteDatabase('predictions.db')`
 
-Create a sqlite databse that will be stored in a file called `predictions.db`.
+Create a sqlite database that will be stored in a file called `predictions.db`.
 This may seem trivial right now, but soon enough you will see that changing
 out this line of code for one other will result in a lot of value for the effort.
 
@@ -414,7 +414,7 @@ def predict():
     p = Prediction(
         observation_id=_id,
         proba=proba,
-        observation=request.data,
+        observation=request.data
     )
     try:
         p.save()
@@ -737,7 +737,6 @@ Here are the logs for the two calls we just made:
 2017-12-27T20:20:46.033529+00:00 heroku[router]: at=info method=POST path="/update" host=heroku-model-deploy.herokuapp.com request_id=cc92e857-895d-425b-ab00-a92862e1253e fwd="86.166.46.98" dyno=web.1 connect=1ms service=9ms status=200 bytes=417 protocol=https
 ```
 
---- HERE ---
 
 ### Import problems
 
@@ -748,7 +747,7 @@ when unpickling, you'll need to do the following.
 
 Let's say that you have a custom transformer, called `MyCustomTransformer`, that is part of your
 pickled pipeline. In that case, you'll want to create a [python package](https://www.learnpython.org/en/Modules_and_Packages)
-from which you import the custom transformer, in both your traning and deployment code.
+from which you import the custom transformer, in both your training and deployment code.
 
 In our example, let's create the following package called `custom_transformers` by just creating a directory
 with the same name and putting two files inside of it so that it looks like this:
