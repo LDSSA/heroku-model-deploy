@@ -649,7 +649,7 @@ with the name of the app you just created:
 set git remote heroku to https://git.heroku.com/heroku-model-deploy.git
 ```
 
-At this point, we'll need to do something a bit extra, in order to sort out our python dependencies in heroku, by specifying and configuring a heroku buildpack:
+At this point, we'll need to do something a bit extra, in order to sort out our python dependencies in heroku, by specifying and configuring a heroku buildpack (the output might be slightly different, but it will be clear if the command was successful!):
 
 ```sh
 ~ > heroku stack:set container
